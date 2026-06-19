@@ -1,0 +1,177 @@
+"use client";
+
+import { Formation, SkillTrack, Slot } from "@/lib/types";
+import { useUnits } from "@/lib/units-context";
+import { Portrait, Stars } from "./Portrait";
+
+export type SlotRef =
+  | { row: "back" | "front"; index: number }
+  | { row: "pet"; index: 0 };
+
+function slotKey(ref: SlotRef) {
+  return `${ref.row}-${ref.index}`;
+}
+
+function SlotCell({
+  slot,
+  refObj,
+  lineColor,
+  onPick,
+  onToggle,
+  onClear,
+}: {
+  slot: Slot;
+  refObj: SlotRef;
+  lineColor: string;
+  onPick: (ref: SlotRef) => void;
+  onToggle: (ref: SlotRef, track: SkillTrack) => void;
+  onClear: (ref: SlotRef) => void;
+}) {
+  const { getUnit } = useUnits();
+  const unit = getUnit(slot.unitId);
+  return (
+    <div className="flex items-center gap-1">
+      <div className="flex flex-col items-center">
+        <button
+          type="button"
+          onClick={() => onPick(refObj)}
+          className="relative grid h-[88px] w-[78px] place-items-center rounded-2xl border-2 border-dashed border-rose-200 bg-white/70 transition hover:border-rose-300"
+          style={unit ? { borderStyle: "solid", borderColor: lineColor } : {}}
+        >
+          {unit ? (
+            <>
+              <Portrait unit={unit} size={70} />
+              <span className="absolute right-1 top-1 grid h-4 w-4 place-items-center rounded-full bg-yellow-400 text-[10px] font-bold text-white">
+                {slot.order ?? ""}
+              </span>
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onClear(refObj);
+                }}
+                className="absolute -left-1 -top-1 grid h-5 w-5 place-items-center rounded-full bg-gray-700 text-xs text-white"
+                aria-label="ลบ"
+              >
+                ×
+              </button>
+            </>
+          ) : (
+            <span className="text-3xl font-light text-rose-300">+</span>
+          )}
+        </button>
+        <span className="mt-1 max-w-[78px] truncate text-xs text-gray-500">
+          {unit ? unit.name : "name"}
+        </span>
+      </div>
+
+      {/* T / B skill-order toggles */}
+      <div className="flex flex-col gap-1">
+        {(["T", "B"] as SkillTrack[]).map((track) => {
+          const active = slot.track === track;
+          return (
+            <button
+              key={track}
+              type="button"
+              disabled={!unit}
+              onClick={() => onToggle(refObj, track)}
+              className="grid h-6 w-6 place-items-center rounded-full border text-xs font-bold transition disabled:opacity-30"
+              style={
+                active
+                  ? { background: lineColor, color: "#fff", borderColor: lineColor }
+                  : { background: "#fff", color: "#9ca3af", borderColor: "#e5e7eb" }
+              }
+            >
+              {track}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+export function FormationGrid({
+  formation,
+  onPick,
+  onToggle,
+  onClear,
+}: {
+  formation: Formation;
+  onPick: (ref: SlotRef) => void;
+  onToggle: (ref: SlotRef, track: SkillTrack) => void;
+  onClear: (ref: SlotRef) => void;
+}) {
+  const back = "#ef6b78";
+  const front = "#7aa2f7";
+
+  return (
+    <div className="rounded-3xl border border-rose-100 bg-rose-50/60 p-5">
+      <div className="flex flex-wrap items-start justify-between gap-6">
+        {/* Hero formation */}
+        <div className="flex flex-col gap-6">
+          {/* Back row */}
+          <div className="relative flex items-center gap-3">
+            <div className="flex gap-3">
+              {formation.back.map((slot, i) => (
+                <SlotCell
+                  key={slotKey({ row: "back", index: i })}
+                  slot={slot}
+                  refObj={{ row: "back", index: i }}
+                  lineColor={back}
+                  onPick={onPick}
+                  onToggle={onToggle}
+                  onClear={onClear}
+                />
+              ))}
+            </div>
+            <span
+              className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-sm font-bold text-white"
+              style={{ background: back }}
+            >
+              B
+            </span>
+          </div>
+
+          {/* Front row */}
+          <div className="relative flex items-center gap-3">
+            <div className="flex gap-3">
+              {formation.front.map((slot, i) => (
+                <SlotCell
+                  key={slotKey({ row: "front", index: i })}
+                  slot={slot}
+                  refObj={{ row: "front", index: i }}
+                  lineColor={front}
+                  onPick={onPick}
+                  onToggle={onToggle}
+                  onClear={onClear}
+                />
+              ))}
+            </div>
+            <span
+              className="grid h-7 w-7 shrink-0 place-items-center rounded-full text-sm font-bold text-white"
+              style={{ background: front }}
+            >
+              F
+            </span>
+          </div>
+        </div>
+
+        {/* Pet slot */}
+        <div className="flex flex-col items-center gap-2">
+          <span className="text-xs font-medium text-gray-400">สัตว์เลี้ยง</span>
+          <SlotCell
+            slot={formation.pet}
+            refObj={{ row: "pet", index: 0 }}
+            lineColor="#c084fc"
+            onPick={onPick}
+            onToggle={onToggle}
+            onClear={onClear}
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export { Stars };

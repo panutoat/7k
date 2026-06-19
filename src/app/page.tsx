@@ -44,8 +44,8 @@ export default function Home() {
     <main className="mx-auto max-w-5xl px-4 py-8">
       <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight">7k-combo</h1>
-          <p className="text-sm text-gray-500">ตัวช่วยจัดทีมเคาน์เตอร์</p>
+          <h1 className="text-2xl font-extrabold tracking-tight">7k-เสือ</h1>
+          <p className="text-sm text-gray-500">ตีกิลวอ</p>
         </div>
         <div className="flex items-center gap-2">
           <Link

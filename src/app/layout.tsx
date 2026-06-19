@@ -3,7 +3,7 @@ import "./globals.css";
 import { UnitsProvider } from "@/lib/units-context";
 
 export const metadata: Metadata = {
-  title: "7k-combo",
+  title: "7k-เสือ",
   description: "ตัวช่วยจัดทีมเคาน์เตอร์ (clone)",
 };
 

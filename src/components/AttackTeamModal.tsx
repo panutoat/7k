@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import {
   AttackTeam,
   DefenseTeam,
@@ -10,6 +10,12 @@ import {
 import { useUnits } from "@/lib/units-context";
 import { FormationEditor } from "./FormationEditor";
 import { FormationPreview } from "./FormationPreview";
+
+interface HistoryItem {
+  warName: string;
+  formation: Formation;
+  link: string | null;
+}
 
 /** Build/edit one of a member's attack teams (a single slot). */
 export function AttackTeamModal({
@@ -42,6 +48,15 @@ export function AttackTeamModal({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [conflicts, setConflicts] = useState<string[]>([]);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+
+  useEffect(() => {
+    fetch(`/api/wars/${warId}/my-history`)
+      .then((r) => r.json())
+      .then((d) => setHistory((d.history as HistoryItem[]) ?? []))
+      .catch(() => setHistory([]));
+  }, [warId]);
 
   async function save() {
     setSaving(true);
@@ -130,6 +145,39 @@ export function AttackTeamModal({
               </div>
             )}
           </div>
+
+          {history.length > 0 && (
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowHistory((s) => !s)}
+                className="text-sm font-medium text-blue-500 hover:underline"
+              >
+                {showHistory ? "ซ่อนประวัติ" : `เลือกจากทีมที่เคยใช้ (${history.length})`}
+              </button>
+              {showHistory && (
+                <div className="mt-2 grid max-h-56 grid-cols-2 gap-2 overflow-y-auto sm:grid-cols-3">
+                  {history.map((h, i) => (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => {
+                        setFormation(h.formation);
+                        if (h.link) setLink(h.link);
+                        setShowHistory(false);
+                      }}
+                      className="rounded-xl border border-gray-200 p-2 text-left hover:border-blue-300 hover:bg-blue-50"
+                    >
+                      <p className="mb-1 truncate text-[11px] text-gray-400">
+                        {h.warName}
+                      </p>
+                      <FormationPreview formation={h.formation} size={24} showType={false} />
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           {conflicts.length > 0 && (
             <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600">

@@ -677,6 +677,31 @@ export async function listAttacks(
   return rows.map(toAttack);
 }
 
+/** A member's previously-used attack formations from OTHER wars (history). */
+export async function listMemberAttackHistory(
+  memberId: string,
+  excludeWarId: string
+): Promise<{ warName: string; formation: Formation; link: string | null }[]> {
+  await ensureSchema();
+  const { rows } = await getPool().query<{
+    war_name: string;
+    formation: Formation;
+    link: string | null;
+  }>(
+    `SELECT w.name AS war_name, a.formation, a.link
+     FROM attack_teams a JOIN wars w ON w.id = a.war_id
+     WHERE a.member_id = $1 AND a.war_id <> $2 AND a.formation IS NOT NULL
+     ORDER BY a.updated_at DESC
+     LIMIT 30`,
+    [memberId, excludeWarId]
+  );
+  return rows.map((r) => ({
+    warName: r.war_name,
+    formation: r.formation,
+    link: r.link,
+  }));
+}
+
 /**
  * Heroes already committed by a member in this war, excluding one slot.
  * Used to enforce "no duplicate character across a member's attack teams".

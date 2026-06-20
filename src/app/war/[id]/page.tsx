@@ -209,6 +209,16 @@ export default function MemberWarPage() {
                 </div>
               )}
 
+              {target && (
+                <div className="mt-3 rounded-xl border border-blue-100 bg-blue-50/50 p-3">
+                  <p className="mb-1.5 text-xs font-semibold text-blue-600">
+                    🛡️ ตีทีมป้องกัน #{targetIdx}
+                    {target.label ? ` · ${target.label}` : ""}
+                  </p>
+                  <FormationPreview formation={target.formation} size={34} />
+                </div>
+              )}
+
               {atk && (
                 <div className="mt-2 flex gap-2">
                   <button
@@ -237,43 +247,6 @@ export default function MemberWarPage() {
           );
         })}
       </div>
-
-      {/* Enemy defenses — read-only reference */}
-      <section className="mt-8">
-        <h2 className="mb-3 text-lg font-bold">
-          ทีมป้องกันของศัตรู ({defenses.length})
-        </h2>
-        {defenses.length === 0 ? (
-          <p className="rounded-2xl border border-dashed border-gray-200 bg-white p-6 text-center text-sm text-gray-400">
-            แอดมินยังไม่ได้ใส่ทีมป้องกัน
-          </p>
-        ) : (
-          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {defenses.map((d, i) => (
-              <div
-                key={d.id}
-                className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm"
-              >
-                <p className="mb-2 text-sm font-semibold text-gray-600">
-                  #{i + 1}
-                  {d.label ? ` · ${d.label}` : ""}
-                </p>
-                <FormationPreview formation={d.formation} size={38} />
-                {d.link && (
-                  <a
-                    href={d.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-2 inline-block text-xs font-medium text-blue-500 hover:underline"
-                  >
-                    🔗 7k-combo
-                  </a>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
 
       {editSlot != null && (
         <AttackTeamModal

@@ -69,6 +69,16 @@ export default function AdminWarPage() {
   const attackOf = (memberId: string, slot: number) =>
     attacks.find((a) => a.memberId === memberId && a.slot === slot) ?? null;
 
+  // Heroes the member used in their OTHER slots (for the dup check when editing).
+  const blockedFor = (memberId: string, excludeSlot: number) => {
+    const set = new Set<string>();
+    for (const a of attacks) {
+      if (a.memberId !== memberId || a.slot === excludeSlot || !a.formation) continue;
+      for (const uid of formationUnitIds(a.formation)) set.add(uid);
+    }
+    return set;
+  };
+
   const statsOf = (memberId: string) => {
     const mine = attacks.filter((a) => a.memberId === memberId);
     return {
@@ -425,6 +435,7 @@ export default function AdminWarPage() {
           slot={edit.slot}
           existing={attackOf(edit.member.id, edit.slot)}
           defenses={defenses}
+          blockedUnitIds={blockedFor(edit.member.id, edit.slot)}
           onClose={() => setEdit(null)}
           onSaved={() => {
             setEdit(null);

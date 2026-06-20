@@ -1,13 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { AttackTeam, DefenseTeam } from "@/lib/types";
+import {
+  AttackTeam,
+  DefenseTeam,
+  Formation,
+  emptyFormation,
+  formationHeroIds,
+} from "@/lib/types";
+import { FormationEditor } from "./FormationEditor";
 import { FormationPreview } from "./FormationPreview";
 
 /**
- * Admin marks a member's attack slot as done and/or pairs it with a defense —
- * useful when a member attacked in-game but didn't fill the web. Works whether
- * or not the member has actually built the team (formation may be empty).
+ * Admin marks a member's attack slot — result, target, and (optionally) the
+ * heroes used, so the remaining-hero tally is accurate even when the member
+ * didn't fill the team on the web.
  */
 export function AdminAttackModal({
   warId,
@@ -16,6 +23,7 @@ export function AdminAttackModal({
   slot,
   existing,
   defenses,
+  blockedUnitIds,
   onClose,
   onSaved,
 }: {
@@ -25,6 +33,8 @@ export function AdminAttackModal({
   slot: number;
   existing: AttackTeam | null;
   defenses: DefenseTeam[];
+  /** Heroes used by this member's OTHER slots (for the dup check). */
+  blockedUnitIds?: Set<string>;
   onClose: () => void;
   onSaved: () => void;
 }) {
@@ -35,6 +45,9 @@ export function AdminAttackModal({
   const [result, setResult] = useState<"win" | "loss" | null>(
     existing?.result ?? null
   );
+  const [formation, setFormation] = useState<Formation>(
+    existing?.formation ?? emptyFormation()
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,15 +55,15 @@ export function AdminAttackModal({
     setSaving(true);
     setError(null);
     try {
-      // Reuse the upsert endpoint (admin may pass memberId). Keep any existing
-      // formation untouched by re-sending it.
+      // Send the (possibly edited) formation; null it out if no heroes set.
+      const hasHeroes = formationHeroIds(formation).length > 0;
       const res = await fetch(`/api/wars/${warId}/attacks`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           memberId,
           slot,
-          formation: existing?.formation ?? null,
+          formation: hasHeroes ? formation : null,
           targetDefenseId: targetId,
           link: existing?.link ?? null,
           result,
@@ -71,7 +84,7 @@ export function AdminAttackModal({
 
   return (
     <div className="fixed inset-0 z-40 flex items-start justify-center overflow-y-auto bg-black/40 p-4 sm:p-8">
-      <div className="w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-card">
+      <div className="w-full max-w-3xl overflow-hidden rounded-3xl bg-white shadow-card">
         <div className="flex items-center justify-between border-b px-6 py-4">
           <h2 className="text-lg font-bold">
             {memberName} · ทีม #{slot}
@@ -82,13 +95,16 @@ export function AdminAttackModal({
         </div>
 
         <div className="space-y-4 px-6 py-5">
-          {existing?.formation ? (
-            <div className="rounded-xl border border-gray-100 bg-gray-50 p-3">
-              <FormationPreview formation={existing.formation} size={36} />
-            </div>
-          ) : (
-            <p className="text-sm text-gray-400">สมาชิกยังไม่ได้กรอกทีมในเว็บ</p>
-          )}
+          <div>
+            <label className="mb-1 block text-sm text-gray-500">
+              ฮีโร่ที่ใช้ (ใส่เพื่อให้นับยอดได้ — ฟอร์เมชัน/แหวนไม่บังคับ)
+            </label>
+            <FormationEditor
+              value={formation}
+              onChange={setFormation}
+              blockedUnitIds={blockedUnitIds}
+            />
+          </div>
 
           <div>
             <label className="mb-1 block text-sm text-gray-500">ผลการตี</label>

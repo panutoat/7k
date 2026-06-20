@@ -26,12 +26,17 @@ export default function CharactersAdminPage() {
     return q === "" ? units : units.filter((u) => u.name.includes(q));
   }, [units, query]);
 
-  const grouped = useMemo(() => {
-    const groups = CATEGORIES.map((c) => ({
-      cat: c,
-      units: filtered.filter((u) => u.category === c.id),
-    })).filter((g) => g.units.length > 0);
-    return groups;
+  // Split into Characters vs Pets first, then by category within each.
+  const sections = useMemo(() => {
+    const groupsFor = (kind: Unit["kind"]) =>
+      CATEGORIES.map((c) => ({
+        cat: c,
+        units: filtered.filter((u) => u.kind === kind && u.category === c.id),
+      })).filter((g) => g.units.length > 0);
+    return [
+      { id: "character", title: "ตัวละคร", groups: groupsFor("character") },
+      { id: "pet", title: "สัตว์เลี้ยง", groups: groupsFor("pet") },
+    ].filter((s) => s.groups.length > 0);
   }, [filtered]);
 
   async function remove(u: Unit) {
@@ -88,53 +93,67 @@ export default function CharactersAdminPage() {
         </div>
       )}
 
-      {!loading && !error && grouped.length === 0 && (
+      {!loading && !error && sections.length === 0 && (
         <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-10 text-center text-gray-400">
           ยังไม่มีตัวละคร — กด “เพิ่มตัวละคร”
         </div>
       )}
 
-      <div className="space-y-7">
-        {grouped.map((g) => (
-          <section key={g.cat.id}>
-            <h2 className="mb-3 text-sm font-bold uppercase tracking-wide text-gray-400">
-              {g.cat.label}
-            </h2>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {g.units.map((u) => (
-                <div
-                  key={u.id}
-                  className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm"
-                >
-                  <div className="rounded-lg bg-gradient-to-b from-amber-300 to-amber-500 p-[2px]">
-                    <Portrait unit={u} size={56} />
-                    <Stars count={u.stars} />
+      <div className="space-y-10">
+        {sections.map((section) => (
+          <div key={section.id}>
+            <div className="mb-4 flex items-center gap-2">
+              <span
+                className={`h-5 w-1.5 rounded ${
+                  section.id === "pet" ? "bg-violet-500" : "bg-rose-500"
+                }`}
+              />
+              <h2 className="text-xl font-extrabold">{section.title}</h2>
+            </div>
+            <div className="space-y-7">
+              {section.groups.map((g) => (
+                <section key={`${section.id}-${g.cat.id}`}>
+                  <h3 className="mb-3 text-sm font-bold uppercase tracking-wide text-gray-400">
+                    {g.cat.label}
+                  </h3>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                    {g.units.map((u) => (
+                      <div
+                        key={u.id}
+                        className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm"
+                      >
+                        <div className="rounded-lg bg-gradient-to-b from-amber-300 to-amber-500 p-[2px]">
+                          <Portrait unit={u} size={56} />
+                          <Stars count={u.stars} />
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate font-semibold">{u.name}</p>
+                          <p className="text-xs text-gray-400">
+                            {u.kind === "pet" ? "สัตว์เลี้ยง" : "ตัวละคร"} · {u.stars}★
+                          </p>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <button
+                            onClick={() => setEditor({ unit: u })}
+                            className="rounded-lg border border-gray-200 px-3 py-1 text-xs font-medium hover:bg-gray-50"
+                          >
+                            แก้ไข
+                          </button>
+                          <button
+                            onClick={() => remove(u)}
+                            disabled={busyId === u.id}
+                            className="rounded-lg border border-gray-200 px-3 py-1 text-xs font-medium text-red-500 hover:bg-red-50 disabled:opacity-50"
+                          >
+                            ลบ
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                  <div className="min-w-0 flex-1">
-                    <p className="truncate font-semibold">{u.name}</p>
-                    <p className="text-xs text-gray-400">
-                      {u.kind === "pet" ? "สัตว์เลี้ยง" : "ตัวละคร"} · {u.stars}★
-                    </p>
-                  </div>
-                  <div className="flex flex-col gap-1">
-                    <button
-                      onClick={() => setEditor({ unit: u })}
-                      className="rounded-lg border border-gray-200 px-3 py-1 text-xs font-medium hover:bg-gray-50"
-                    >
-                      แก้ไข
-                    </button>
-                    <button
-                      onClick={() => remove(u)}
-                      disabled={busyId === u.id}
-                      className="rounded-lg border border-gray-200 px-3 py-1 text-xs font-medium text-red-500 hover:bg-red-50 disabled:opacity-50"
-                    >
-                      ลบ
-                    </button>
-                  </div>
-                </div>
+                </section>
               ))}
             </div>
-          </section>
+          </div>
         ))}
       </div>
 

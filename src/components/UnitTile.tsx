@@ -16,6 +16,8 @@ export function UnitTile({
     <button
       type="button"
       onClick={() => onClick(unit)}
+      draggable
+      onDragStart={(e) => e.dataTransfer.setData("text/plain", `unit:${unit.id}`)}
       className="flex w-[84px] shrink-0 flex-col items-center gap-1 rounded-xl p-1.5 transition hover:bg-rose-50"
       title={unit.name}
     >

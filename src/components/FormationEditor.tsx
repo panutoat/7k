@@ -16,6 +16,7 @@ import {
   orderedCount,
   reshapeFormation,
 } from "@/lib/types";
+import { useUnits } from "@/lib/units-context";
 import { FormationGrid, SlotRef } from "./FormationGrid";
 import { CharacterPicker } from "./CharacterPicker";
 import { FullRosterModal } from "./FullRosterModal";
@@ -64,6 +65,7 @@ export function FormationEditor({
   onChange: (f: Formation) => void;
   blockedUnitIds?: Set<string>;
 }) {
+  const { getUnit } = useUnits();
   const [activeSlot, setActiveSlot] = useState<SlotRef | null>(null);
   const [pickerKind, setPickerKind] = useState<"character" | "pet">("character");
   const [showRoster, setShowRoster] = useState(false);
@@ -83,7 +85,7 @@ export function FormationEditor({
     return order.find((r) => getSlot(value, r).unitId == null) ?? null;
   }
 
-  function placeUnit(unit: { id: string; kind?: string }) {
+  function placeUnit(unit: { id: string; kind?: string }, dropTarget?: SlotRef) {
     if (blockedUnitIds?.has(unit.id)) {
       setError("ตัวละครนี้ถูกใช้ในทีมอื่นของคุณแล้ว");
       return;
@@ -93,8 +95,22 @@ export function FormationEditor({
       setError("ตัวละครนี้อยู่ในทีมนี้แล้ว");
       return;
     }
-    const target = activeSlot ?? firstEmpty();
+    const isPetUnit = unit.kind === "pet";
+    // Pets default to the pet slot; heroes to the first empty hero slot.
+    const target =
+      dropTarget ?? activeSlot ?? (isPetUnit ? ({ row: "pet", index: 0 } as SlotRef) : firstEmpty());
     if (!target) return;
+
+    // Pets only in the pet slot; heroes only in hero rows.
+    if (target.row === "pet" && !isPetUnit) {
+      setError("ช่องนี้สำหรับสัตว์เลี้ยง");
+      return;
+    }
+    if (target.row !== "pet" && isPetUnit) {
+      setError("สัตว์เลี้ยงต้องลงช่องสัตว์เลี้ยง");
+      return;
+    }
+
     // Cap heroes (back/front rows) at MAX_HEROES; the pet slot is separate.
     if (target.row !== "pet") {
       const replacing = getSlot(value, target).unitId != null;
@@ -108,6 +124,12 @@ export function FormationEditor({
     onChange(next);
     setActiveSlot(null);
     setError(null);
+  }
+
+  // Drop a unit (by id, from the picker list) onto a specific slot.
+  function placeUnitAt(ref: SlotRef, unitId: string) {
+    const unit = getUnit(unitId);
+    if (unit) placeUnit({ id: unit.id, kind: unit.kind }, ref);
   }
 
   function toggleRing(ref: SlotRef, ring: RingType) {
@@ -218,6 +240,7 @@ export function FormationEditor({
         onClear={clearSlot}
         onSwap={swapSlots}
         onToggleRing={toggleRing}
+        onPlaceUnit={placeUnitAt}
       />
       <CharacterPicker
         onPick={placeUnit}

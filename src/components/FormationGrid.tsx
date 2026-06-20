@@ -21,6 +21,7 @@ function SlotCell({
   onClear,
   onSwap,
   onToggleRing,
+  onPlaceUnit,
 }: {
   slot: Slot;
   refObj: SlotRef;
@@ -30,6 +31,7 @@ function SlotCell({
   onClear: (ref: SlotRef) => void;
   onSwap: (a: SlotRef, b: SlotRef) => void;
   onToggleRing: (ref: SlotRef, ring: RingType) => void;
+  onPlaceUnit: (ref: SlotRef, unitId: string) => void;
 }) {
   const { getUnit } = useUnits();
   const unit = getUnit(slot.unitId);
@@ -43,21 +45,24 @@ function SlotCell({
           onClick={() => onPick(refObj)}
           draggable={canDrag}
           onDragStart={(e) =>
-            e.dataTransfer.setData("text/plain", JSON.stringify(refObj))
+            e.dataTransfer.setData("text/plain", `slot:${JSON.stringify(refObj)}`)
           }
-          onDragOver={(e) => {
-            if (refObj.row !== "pet") e.preventDefault();
-          }}
+          onDragOver={(e) => e.preventDefault()}
           onDrop={(e) => {
             e.preventDefault();
-            if (refObj.row === "pet") return;
-            try {
-              const src = JSON.parse(
-                e.dataTransfer.getData("text/plain")
-              ) as SlotRef;
-              if (src) onSwap(src, refObj);
-            } catch {
-              /* ignore */
+            const data = e.dataTransfer.getData("text/plain");
+            if (data.startsWith("unit:")) {
+              onPlaceUnit(refObj, data.slice(5));
+              return;
+            }
+            if (data.startsWith("slot:")) {
+              if (refObj.row === "pet") return;
+              try {
+                const src = JSON.parse(data.slice(5)) as SlotRef;
+                if (src) onSwap(src, refObj);
+              } catch {
+                /* ignore */
+              }
             }
           }}
           className="relative grid h-[88px] w-[78px] place-items-center rounded-2xl border-2 border-dashed border-rose-300 bg-white transition hover:border-rose-400"
@@ -154,6 +159,7 @@ export function FormationGrid({
   onClear,
   onSwap,
   onToggleRing,
+  onPlaceUnit,
 }: {
   formation: Formation;
   onPick: (ref: SlotRef) => void;
@@ -161,6 +167,7 @@ export function FormationGrid({
   onClear: (ref: SlotRef) => void;
   onSwap: (a: SlotRef, b: SlotRef) => void;
   onToggleRing: (ref: SlotRef, ring: RingType) => void;
+  onPlaceUnit: (ref: SlotRef, unitId: string) => void;
 }) {
   const back = "#ef6b78";
   const front = "#7aa2f7";
@@ -184,6 +191,7 @@ export function FormationGrid({
                   onClear={onClear}
                   onSwap={onSwap}
                   onToggleRing={onToggleRing}
+                  onPlaceUnit={onPlaceUnit}
                 />
               ))}
             </div>
@@ -209,6 +217,7 @@ export function FormationGrid({
                   onClear={onClear}
                   onSwap={onSwap}
                   onToggleRing={onToggleRing}
+                  onPlaceUnit={onPlaceUnit}
                 />
               ))}
             </div>
@@ -233,6 +242,7 @@ export function FormationGrid({
             onClear={onClear}
             onSwap={onSwap}
             onToggleRing={onToggleRing}
+            onPlaceUnit={onPlaceUnit}
           />
         </div>
       </div>

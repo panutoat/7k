@@ -1,8 +1,4 @@
-# 7k-combo
 
-A Next.js clone of the [7k-combo](https://7k-combo.pages.dev/) team-builder — pick an
-enemy team type, place characters/pets into a front/back formation with T/B skill-order
-toggles, and save teams to PostgreSQL.
 
 ## Guild war
 

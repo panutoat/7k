@@ -1,6 +1,6 @@
 "use client";
 
-import { Formation, FORMATION_TYPES, Slot } from "@/lib/types";
+import { Formation, FORMATION_TYPES, RINGS, Slot } from "@/lib/types";
 import { useUnits } from "@/lib/units-context";
 import { Portrait } from "./Portrait";
 
@@ -32,6 +32,18 @@ function MiniSlot({ slot, line, size = 40 }: { slot: Slot; line: string; size?: 
         <span className="absolute -bottom-1 -right-1 grid h-4 w-4 place-items-center rounded-full bg-sky-400 text-[10px] font-bold text-white">
           {slot.bottom}
         </span>
+      )}
+      {slot.rings && slot.rings.length > 0 && (
+        <div className="absolute -bottom-1 left-0 flex gap-0.5">
+          {RINGS.filter((r) => slot.rings!.includes(r.id)).map((r) => (
+            <span
+              key={r.id}
+              className="h-2 w-2 rounded-full ring-1 ring-white"
+              style={{ background: r.color }}
+              title={`แหวน${r.label}`}
+            />
+          ))}
+        </div>
       )}
     </div>
   );

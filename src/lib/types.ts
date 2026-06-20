@@ -46,12 +46,28 @@ export interface Unit {
 /** Skill-ordering toggle on a slot: T = top track, B = bottom track. */
 export type SkillTrack = "T" | "B";
 
+/** Legendary ring types (stack different kinds, up to 3 per hero). */
+export type RingType = "revive" | "immortal" | "shield";
+
+export const RINGS: {
+  id: RingType;
+  label: string;
+  short: string;
+  color: string;
+}[] = [
+  { id: "revive", label: "คืนชีพ", short: "ชีพ", color: "#a855f7" },
+  { id: "immortal", label: "อมตะ", short: "อมตะ", color: "#ef4444" },
+  { id: "shield", label: "โล่ป้องกัน", short: "โล่", color: "#f59e0b" },
+];
+
 export interface Slot {
   unitId: string | null;
   /** Skill-order number (1..MAX_SKILL_ORDER) for this unit's TOP skill, or null. */
   top: number | null;
   /** Skill-order number for this unit's BOTTOM skill, or null. */
   bottom: number | null;
+  /** Legendary rings on this hero (distinct kinds). */
+  rings?: RingType[];
 }
 
 /** Formation preset (รูปแบบ) — like 7k's basic/balanced/attack/defense. */
@@ -103,7 +119,7 @@ export function layoutFor(type: FormationType | undefined): {
 }
 
 export function emptySlot(): Slot {
-  return { unitId: null, top: null, bottom: null };
+  return { unitId: null, top: null, bottom: null, rings: [] };
 }
 
 /**

@@ -7,6 +7,7 @@ import {
   FormationType,
   MAX_HEROES,
   MAX_SKILL_ORDER,
+  RingType,
   SkillTrack,
   Slot,
   formationHeroIds,
@@ -102,10 +103,20 @@ export function FormationEditor({
       }
     }
     const next = clone(value);
-    setSlot(next, target, { unitId: unit.id, top: null, bottom: null });
+    setSlot(next, target, { unitId: unit.id, top: null, bottom: null, rings: [] });
     onChange(next);
     setActiveSlot(null);
     setError(null);
+  }
+
+  function toggleRing(ref: SlotRef, ring: RingType) {
+    const next = clone(value);
+    const slot = getSlot(next, ref);
+    if (!slot.unitId) return;
+    const set = new Set(slot.rings ?? []);
+    set.has(ring) ? set.delete(ring) : set.add(ring);
+    slot.rings = [...set];
+    onChange(next);
   }
 
   function toggleTrack(ref: SlotRef, track: SkillTrack) {
@@ -129,7 +140,7 @@ export function FormationEditor({
 
   function clearSlot(ref: SlotRef) {
     const next = clone(value);
-    setSlot(next, ref, { unitId: null, top: null, bottom: null });
+    setSlot(next, ref, { unitId: null, top: null, bottom: null, rings: [] });
     renumber(next);
     onChange(next);
   }
@@ -195,6 +206,7 @@ export function FormationEditor({
         onToggle={toggleTrack}
         onClear={clearSlot}
         onSwap={swapSlots}
+        onToggleRing={toggleRing}
       />
       <CharacterPicker
         onPick={placeUnit}

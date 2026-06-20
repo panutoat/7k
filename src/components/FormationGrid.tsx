@@ -1,6 +1,6 @@
 "use client";
 
-import { Formation, SkillTrack, Slot } from "@/lib/types";
+import { Formation, RINGS, RingType, SkillTrack, Slot } from "@/lib/types";
 import { useUnits } from "@/lib/units-context";
 import { Portrait, Stars } from "./Portrait";
 
@@ -20,6 +20,7 @@ function SlotCell({
   onToggle,
   onClear,
   onSwap,
+  onToggleRing,
 }: {
   slot: Slot;
   refObj: SlotRef;
@@ -28,10 +29,12 @@ function SlotCell({
   onToggle: (ref: SlotRef, track: SkillTrack) => void;
   onClear: (ref: SlotRef) => void;
   onSwap: (a: SlotRef, b: SlotRef) => void;
+  onToggleRing: (ref: SlotRef, ring: RingType) => void;
 }) {
   const { getUnit } = useUnits();
   const unit = getUnit(slot.unitId);
   const canDrag = !!unit && refObj.row !== "pet";
+  const rings = slot.rings ?? [];
   return (
     <div className="flex items-center gap-1">
       <div className="flex flex-col items-center">
@@ -82,6 +85,31 @@ function SlotCell({
         <span className="mt-1 max-w-[78px] truncate text-xs text-gray-600">
           {unit ? unit.name : "ว่าง"}
         </span>
+        {/* Legendary ring toggles (heroes only) */}
+        {refObj.row !== "pet" && (
+          <div className="mt-1 flex gap-0.5">
+            {RINGS.map((r) => {
+              const on = rings.includes(r.id);
+              return (
+                <button
+                  key={r.id}
+                  type="button"
+                  disabled={!unit}
+                  onClick={() => onToggleRing(refObj, r.id)}
+                  className="rounded px-1 py-0.5 text-[9px] font-bold leading-none transition disabled:opacity-30"
+                  style={
+                    on
+                      ? { background: r.color, color: "#fff" }
+                      : { background: "#f3f4f6", color: "#9ca3af" }
+                  }
+                  title={`แหวน${r.label}`}
+                >
+                  {r.short}
+                </button>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* T / B skill-order toggles — heroes only (pets have no skill order). */}
@@ -125,12 +153,14 @@ export function FormationGrid({
   onToggle,
   onClear,
   onSwap,
+  onToggleRing,
 }: {
   formation: Formation;
   onPick: (ref: SlotRef) => void;
   onToggle: (ref: SlotRef, track: SkillTrack) => void;
   onClear: (ref: SlotRef) => void;
   onSwap: (a: SlotRef, b: SlotRef) => void;
+  onToggleRing: (ref: SlotRef, ring: RingType) => void;
 }) {
   const back = "#ef6b78";
   const front = "#7aa2f7";
@@ -153,6 +183,7 @@ export function FormationGrid({
                   onToggle={onToggle}
                   onClear={onClear}
                   onSwap={onSwap}
+                  onToggleRing={onToggleRing}
                 />
               ))}
             </div>
@@ -177,6 +208,7 @@ export function FormationGrid({
                   onToggle={onToggle}
                   onClear={onClear}
                   onSwap={onSwap}
+                  onToggleRing={onToggleRing}
                 />
               ))}
             </div>
@@ -200,6 +232,7 @@ export function FormationGrid({
             onToggle={onToggle}
             onClear={onClear}
             onSwap={onSwap}
+            onToggleRing={onToggleRing}
           />
         </div>
       </div>

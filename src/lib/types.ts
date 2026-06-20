@@ -196,6 +196,8 @@ export interface DefenseTeam {
   createdAt: string;
 }
 
+export type AttackResult = "win" | "loss" | null;
+
 /** One of a member's attack teams within a war. */
 export interface AttackTeam {
   id: string;
@@ -208,6 +210,8 @@ export interface AttackTeam {
   targetDefenseId: string | null;
   /** Optional 7k-combo (or any) reference link. */
   link: string | null;
+  /** Battle result once attacked. */
+  result: AttackResult;
   done: boolean;
   createdAt: string;
   updatedAt: string;

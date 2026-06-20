@@ -85,15 +85,17 @@ CREATE TABLE IF NOT EXISTS attack_teams (
   formation       JSONB,
   target_defense_id UUID REFERENCES defense_teams(id) ON DELETE SET NULL,
   link            TEXT,
+  result          TEXT CHECK (result IN ('win','loss')),
   done            BOOLEAN NOT NULL DEFAULT false,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (war_id, member_id, slot)
 );
 
--- Migrations for DBs created before the link column existed.
+-- Migrations for DBs created before these columns existed.
 ALTER TABLE defense_teams ADD COLUMN IF NOT EXISTS link TEXT;
 ALTER TABLE attack_teams  ADD COLUMN IF NOT EXISTS link TEXT;
+ALTER TABLE attack_teams  ADD COLUMN IF NOT EXISTS result TEXT;
 
 CREATE INDEX IF NOT EXISTS defense_war_idx ON defense_teams (war_id, sort_order);
 CREATE INDEX IF NOT EXISTS attack_war_member_idx ON attack_teams (war_id, member_id);
@@ -490,6 +492,7 @@ interface AttackRow {
   formation: Formation | null;
   target_defense_id: string | null;
   link: string | null;
+  result: "win" | "loss" | null;
   done: boolean;
   created_at: Date;
   updated_at: Date;
@@ -502,13 +505,14 @@ const toAttack = (r: AttackRow): AttackTeam => ({
   formation: r.formation,
   targetDefenseId: r.target_defense_id,
   link: r.link,
+  result: r.result,
   done: r.done,
   createdAt: new Date(r.created_at).toISOString(),
   updatedAt: new Date(r.updated_at).toISOString(),
 });
 
 const ATTACK_COLS =
-  "id, war_id, member_id, slot, formation, target_defense_id, link, done, created_at, updated_at";
+  "id, war_id, member_id, slot, formation, target_defense_id, link, result, done, created_at, updated_at";
 
 export async function listAttacks(
   warId: string,
@@ -559,16 +563,18 @@ export async function upsertAttack(input: {
   formation: Formation | null;
   targetDefenseId: string | null;
   link: string | null;
+  result: "win" | "loss" | null;
   done: boolean;
 }): Promise<AttackTeam> {
   await ensureSchema();
   const { rows } = await getPool().query<AttackRow>(
-    `INSERT INTO attack_teams (war_id, member_id, slot, formation, target_defense_id, link, done)
-     VALUES ($1, $2, $3, $4, $5, $6, $7)
+    `INSERT INTO attack_teams (war_id, member_id, slot, formation, target_defense_id, link, result, done)
+     VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
      ON CONFLICT (war_id, member_id, slot) DO UPDATE SET
        formation = EXCLUDED.formation,
        target_defense_id = EXCLUDED.target_defense_id,
        link = EXCLUDED.link,
+       result = EXCLUDED.result,
        done = EXCLUDED.done,
        updated_at = now()
      RETURNING ${ATTACK_COLS}`,
@@ -579,22 +585,28 @@ export async function upsertAttack(input: {
       input.formation ? JSON.stringify(input.formation) : null,
       input.targetDefenseId,
       input.link,
+      input.result,
       input.done,
     ]
   );
   return toAttack(rows[0]);
 }
 
-/** Patch only the admin-controllable fields of an existing attack row. */
+/** Patch the admin/owner-controllable fields of an existing attack row. */
 export async function patchAttack(
   id: string,
-  patch: { done?: boolean; targetDefenseId?: string | null }
+  patch: {
+    done?: boolean;
+    targetDefenseId?: string | null;
+    result?: "win" | "loss" | null;
+  }
 ): Promise<AttackTeam | null> {
   await ensureSchema();
   const { rows } = await getPool().query<AttackRow>(
     `UPDATE attack_teams SET
        done = COALESCE($2, done),
        target_defense_id = CASE WHEN $3::boolean THEN $4 ELSE target_defense_id END,
+       result = CASE WHEN $5::boolean THEN $6 ELSE result END,
        updated_at = now()
      WHERE id = $1
      RETURNING ${ATTACK_COLS}`,
@@ -603,6 +615,8 @@ export async function patchAttack(
       patch.done ?? null,
       patch.targetDefenseId !== undefined,
       patch.targetDefenseId ?? null,
+      patch.result !== undefined,
+      patch.result ?? null,
     ]
   );
   return rows[0] ? toAttack(rows[0]) : null;

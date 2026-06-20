@@ -32,6 +32,9 @@ export function AdminAttackModal({
   const [targetId, setTargetId] = useState<string | null>(
     existing?.targetDefenseId ?? null
   );
+  const [result, setResult] = useState<"win" | "loss" | null>(
+    existing?.result ?? null
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -50,7 +53,8 @@ export function AdminAttackModal({
           formation: existing?.formation ?? null,
           targetDefenseId: targetId,
           link: existing?.link ?? null,
-          done,
+          result,
+          done: done || result != null,
         }),
       });
       const data = await res.json();
@@ -85,6 +89,34 @@ export function AdminAttackModal({
           ) : (
             <p className="text-sm text-gray-400">สมาชิกยังไม่ได้กรอกทีมในเว็บ</p>
           )}
+
+          <div>
+            <label className="mb-1 block text-sm text-gray-500">ผลการตี</label>
+            <div className="flex gap-2">
+              <button
+                type="button"
+                onClick={() => setResult(result === "win" ? null : "win")}
+                className={`flex-1 rounded-lg border px-3 py-1.5 text-sm font-semibold ${
+                  result === "win"
+                    ? "border-green-500 bg-green-500 text-white"
+                    : "border-green-200 text-green-600 hover:bg-green-50"
+                }`}
+              >
+                ชนะ
+              </button>
+              <button
+                type="button"
+                onClick={() => setResult(result === "loss" ? null : "loss")}
+                className={`flex-1 rounded-lg border px-3 py-1.5 text-sm font-semibold ${
+                  result === "loss"
+                    ? "border-red-500 bg-red-500 text-white"
+                    : "border-red-200 text-red-500 hover:bg-red-50"
+                }`}
+              >
+                แพ้
+              </button>
+            </div>
+          </div>
 
           <label className="flex items-center gap-2 text-sm text-gray-700">
             <input

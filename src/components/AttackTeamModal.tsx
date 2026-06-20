@@ -56,6 +56,7 @@ export function AttackTeamModal({
           formation,
           targetDefenseId: targetId,
           link,
+          result: existing?.result ?? null,
           done,
         }),
       });

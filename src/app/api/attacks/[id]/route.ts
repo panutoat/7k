@@ -23,11 +23,18 @@ export async function PUT(
     const body = (await req.json()) as {
       done?: boolean;
       targetDefenseId?: string | null;
+      result?: "win" | "loss" | null;
     };
     const attack = await patchAttack(params.id, {
       done: typeof body.done === "boolean" ? body.done : undefined,
       targetDefenseId:
         "targetDefenseId" in body ? body.targetDefenseId ?? null : undefined,
+      result:
+        "result" in body
+          ? body.result === "win" || body.result === "loss"
+            ? body.result
+            : null
+          : undefined,
     });
     return NextResponse.json({ attack });
   } catch (err) {

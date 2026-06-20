@@ -79,8 +79,21 @@ export default function MemberWarPage() {
     load();
   }
 
+  // 8.1: mark result straight from the summary (toggle off if same).
+  async function setResult(atk: AttackTeam, result: "win" | "loss") {
+    const next = atk.result === result ? null : result;
+    await fetch(`/api/attacks/${atk.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ result: next, done: next != null }),
+    });
+    load();
+  }
+
   const usedCount = myAttacks.filter((a) => a.formation).length;
   const doneCount = myAttacks.filter((a) => a.done).length;
+  const winCount = myAttacks.filter((a) => a.result === "win").length;
+  const lossCount = myAttacks.filter((a) => a.result === "loss").length;
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
@@ -91,7 +104,9 @@ export default function MemberWarPage() {
           ← กลับ
         </Link>
         <span className="text-sm text-gray-500">
-          จัดแล้ว {usedCount}/{ATTACK_SLOTS} ทีม · ตีแล้ว {doneCount}
+          จัดแล้ว {usedCount}/{ATTACK_SLOTS} · ตีแล้ว {doneCount} ·{" "}
+          <span className="font-semibold text-green-600">ชนะ {winCount}</span> ·{" "}
+          <span className="font-semibold text-red-500">แพ้ {lossCount}</span>
         </span>
       </div>
 
@@ -122,8 +137,18 @@ export default function MemberWarPage() {
                     {slot}
                   </span>
                   <h3 className="font-semibold">ทีมโจมตี #{slot}</h3>
-                  {atk?.done && (
+                  {atk?.result === "win" && (
                     <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-600">
+                      ชนะ
+                    </span>
+                  )}
+                  {atk?.result === "loss" && (
+                    <span className="rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-500">
+                      แพ้
+                    </span>
+                  )}
+                  {atk?.done && !atk?.result && (
+                    <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-500">
                       ตีแล้ว
                     </span>
                   )}
@@ -181,6 +206,31 @@ export default function MemberWarPage() {
                       🔗 7k-combo
                     </a>
                   )}
+                </div>
+              )}
+
+              {atk && (
+                <div className="mt-2 flex gap-2">
+                  <button
+                    onClick={() => setResult(atk, "win")}
+                    className={`flex-1 rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
+                      atk.result === "win"
+                        ? "border-green-500 bg-green-500 text-white"
+                        : "border-green-200 text-green-600 hover:bg-green-50"
+                    }`}
+                  >
+                    ชนะ
+                  </button>
+                  <button
+                    onClick={() => setResult(atk, "loss")}
+                    className={`flex-1 rounded-lg border px-3 py-1.5 text-xs font-semibold transition ${
+                      atk.result === "loss"
+                        ? "border-red-500 bg-red-500 text-white"
+                        : "border-red-200 text-red-500 hover:bg-red-50"
+                    }`}
+                  >
+                    แพ้
+                  </button>
                 </div>
               )}
             </div>

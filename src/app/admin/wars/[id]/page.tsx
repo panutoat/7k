@@ -28,6 +28,7 @@ export default function AdminWarPage() {
   const [busy, setBusy] = useState(true);
   const [showDefense, setShowDefense] = useState(false);
   const [edit, setEdit] = useState<{ member: Member; slot: number } | null>(null);
+  const [sort, setSort] = useState<"name" | "done-desc" | "done-asc">("done-desc");
 
   useEffect(() => {
     if (loading) return;
@@ -59,6 +60,21 @@ export default function AdminWarPage() {
 
   const attackOf = (memberId: string, slot: number) =>
     attacks.find((a) => a.memberId === memberId && a.slot === slot) ?? null;
+
+  const statsOf = (memberId: string) => {
+    const mine = attacks.filter((a) => a.memberId === memberId);
+    return {
+      done: mine.filter((a) => a.done).length,
+      win: mine.filter((a) => a.result === "win").length,
+      loss: mine.filter((a) => a.result === "loss").length,
+    };
+  };
+
+  const sortedMembers = [...members].sort((a, b) => {
+    if (sort === "name") return a.name.localeCompare(b.name);
+    const diff = statsOf(b.id).done - statsOf(a.id).done;
+    return sort === "done-asc" ? -diff : diff;
+  });
 
   async function deleteDefense(defId: string) {
     if (!confirm("ลบทีมป้องกันนี้?")) return;
@@ -128,7 +144,18 @@ export default function AdminWarPage() {
 
       {/* Attack board */}
       <section className="mt-8">
-        <h2 className="mb-3 text-lg font-bold">ตารางการตี (คลิกช่องเพื่อมาร์ค/จับคู่)</h2>
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-bold">ตารางการตี (คลิกช่องเพื่อมาร์ค/จับคู่)</h2>
+          <select
+            value={sort}
+            onChange={(e) => setSort(e.target.value as typeof sort)}
+            className="rounded-xl border border-gray-200 px-3 py-1.5 text-sm outline-none focus:border-rose-300"
+          >
+            <option value="done-desc">ตีมาก → น้อย</option>
+            <option value="done-asc">ตีน้อย → มาก</option>
+            <option value="name">เรียงตามชื่อ</option>
+          </select>
+        </div>
         {members.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-gray-200 bg-white p-8 text-center text-sm text-gray-400">
             ยังไม่มีสมาชิก — เพิ่มได้ที่หน้าจัดการ
@@ -144,25 +171,42 @@ export default function AdminWarPage() {
                       #{i + 1}
                     </th>
                   ))}
-                  <th className="px-4 py-3 text-center font-medium">ตีแล้ว</th>
+                  <th className="px-3 py-3 text-center font-medium">ตี</th>
+                  <th className="px-3 py-3 text-center font-medium text-green-600">ชนะ</th>
+                  <th className="px-3 py-3 text-center font-medium text-red-500">แพ้</th>
+                  <th className="px-3 py-3 text-center font-medium">ร่วม%</th>
                 </tr>
               </thead>
               <tbody>
-                {members.map((m) => {
-                  const doneCount = attacks.filter(
-                    (a) => a.memberId === m.id && a.done
-                  ).length;
+                {sortedMembers.map((m) => {
+                  const s = statsOf(m.id);
+                  const part = Math.round((s.done / ATTACK_SLOTS) * 100);
                   return (
                     <tr key={m.id} className="border-b last:border-0">
                       <td className="px-4 py-2 font-medium">{m.name}</td>
                       {Array.from({ length: ATTACK_SLOTS }, (_, i) => i + 1).map(
                         (slot) => {
                           const atk = attackOf(m.id, slot);
-                          const cls = atk?.done
-                            ? "bg-green-500 text-white border-green-500"
-                            : atk?.formation
-                            ? "bg-rose-100 text-rose-600 border-rose-200"
-                            : "border-dashed border-gray-200 text-gray-300";
+                          const cls =
+                            atk?.result === "win"
+                              ? "bg-green-500 text-white border-green-500"
+                              : atk?.result === "loss"
+                              ? "bg-red-500 text-white border-red-500"
+                              : atk?.done
+                              ? "bg-gray-400 text-white border-gray-400"
+                              : atk?.formation
+                              ? "bg-rose-100 text-rose-600 border-rose-200"
+                              : "border-dashed border-gray-200 text-gray-300";
+                          const mark =
+                            atk?.result === "win"
+                              ? "W"
+                              : atk?.result === "loss"
+                              ? "L"
+                              : atk?.done
+                              ? "✓"
+                              : atk?.formation
+                              ? "●"
+                              : "+";
                           return (
                             <td key={slot} className="px-1 py-2 text-center">
                               <button
@@ -170,15 +214,22 @@ export default function AdminWarPage() {
                                 className={`grid h-8 w-8 place-items-center rounded-lg border text-xs font-bold transition hover:scale-105 ${cls}`}
                                 title="คลิกเพื่อมาร์ค/จับคู่"
                               >
-                                {atk?.done ? "✓" : atk?.formation ? "●" : "+"}
+                                {mark}
                               </button>
                             </td>
                           );
                         }
                       )}
-                      <td className="px-4 py-2 text-center font-semibold text-gray-500">
-                        {doneCount}/{ATTACK_SLOTS}
+                      <td className="px-3 py-2 text-center font-semibold text-gray-500">
+                        {s.done}/{ATTACK_SLOTS}
                       </td>
+                      <td className="px-3 py-2 text-center font-semibold text-green-600">
+                        {s.win}
+                      </td>
+                      <td className="px-3 py-2 text-center font-semibold text-red-500">
+                        {s.loss}
+                      </td>
+                      <td className="px-3 py-2 text-center text-gray-500">{part}%</td>
                     </tr>
                   );
                 })}

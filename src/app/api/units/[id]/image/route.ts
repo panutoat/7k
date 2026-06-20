@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { getUnitImage, setUnitImage } from "@/lib/db";
+import { requireAdmin } from "@/lib/auth";
+import { fail } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
@@ -20,7 +22,7 @@ export async function GET(
       },
     });
   } catch (err) {
-    return NextResponse.json({ error: message(err) }, { status: 500 });
+    return fail(err);
   }
 }
 
@@ -29,6 +31,7 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
+    requireAdmin();
     const form = await req.formData();
     const file = form.get("image");
     if (!(file instanceof File)) {
@@ -53,10 +56,6 @@ export async function POST(
       image: `/api/units/${params.id}/image?v=${Date.now()}`,
     });
   } catch (err) {
-    return NextResponse.json({ error: message(err) }, { status: 500 });
+    return fail(err);
   }
-}
-
-function message(err: unknown): string {
-  return err instanceof Error ? err.message : "unknown error";
 }

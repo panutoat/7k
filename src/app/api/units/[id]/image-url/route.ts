@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { setUnitImageUrl } from "@/lib/db";
 import { toDirectImageUrl } from "@/lib/drive";
+import { requireAdmin } from "@/lib/auth";
+import { fail } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
@@ -14,6 +16,7 @@ export async function POST(
   { params }: { params: { id: string } }
 ) {
   try {
+    requireAdmin();
     const body = (await req.json()) as { url?: unknown };
     const raw = typeof body.url === "string" ? body.url.trim() : "";
     if (!raw) return NextResponse.json({ error: "กรุณาวางลิงก์รูป" }, { status: 400 });
@@ -30,7 +33,6 @@ export async function POST(
 
     return NextResponse.json({ ok: true, image: url });
   } catch (err) {
-    const msg = err instanceof Error ? err.message : "unknown error";
-    return NextResponse.json({ error: msg }, { status: 500 });
+    return fail(err);
   }
 }

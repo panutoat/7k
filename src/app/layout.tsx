@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { UnitsProvider } from "@/lib/units-context";
+import { AuthProvider } from "@/lib/auth-context";
 
 export const metadata: Metadata = {
   title: "7k-เสือ",
@@ -21,7 +22,9 @@ export default function RootLayout({
         />
       </head>
       <body>
-        <UnitsProvider>{children}</UnitsProvider>
+        <AuthProvider>
+          <UnitsProvider>{children}</UnitsProvider>
+        </AuthProvider>
       </body>
     </html>
   );

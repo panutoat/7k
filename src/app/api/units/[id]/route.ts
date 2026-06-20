@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { deleteUnit, updateUnit } from "@/lib/db";
 import { parseUnitInput } from "@/lib/units-validate";
+import { requireAdmin } from "@/lib/auth";
+import { fail } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
@@ -9,6 +11,7 @@ export async function PUT(
   { params }: { params: { id: string } }
 ) {
   try {
+    requireAdmin();
     const body = (await req.json()) as Record<string, unknown>;
     const parsed = parseUnitInput(body);
     if ("error" in parsed) {
@@ -18,7 +21,7 @@ export async function PUT(
     if (!unit) return NextResponse.json({ error: "not found" }, { status: 404 });
     return NextResponse.json({ unit });
   } catch (err) {
-    return NextResponse.json({ error: message(err) }, { status: 500 });
+    return fail(err);
   }
 }
 
@@ -27,14 +30,11 @@ export async function DELETE(
   { params }: { params: { id: string } }
 ) {
   try {
+    requireAdmin();
     const ok = await deleteUnit(params.id);
     if (!ok) return NextResponse.json({ error: "not found" }, { status: 404 });
     return NextResponse.json({ ok: true });
   } catch (err) {
-    return NextResponse.json({ error: message(err) }, { status: 500 });
+    return fail(err);
   }
-}
-
-function message(err: unknown): string {
-  return err instanceof Error ? err.message : "unknown error";
 }

@@ -4,6 +4,21 @@ A Next.js clone of the [7k-combo](https://7k-combo.pages.dev/) team-builder — 
 enemy team type, place characters/pets into a front/back formation with T/B skill-order
 toggles, and save teams to PostgreSQL.
 
+## Guild war
+
+Members log in and plan attacks against an enemy guild:
+
+- **Login** (`/login`): members enter their name + a shared guild password; admins use a
+  separate admin password. Sessions are a signed cookie (`src/lib/auth.ts`). Passwords come
+  from env vars (see below).
+- **Admin** (`/admin`): pre-create the member roster, create war targets, and add the enemy's
+  **defense teams**. Inside a war (`/admin/wars/:id`) there's a board to mark each member's
+  attacks done / pair them with a defense — handy when someone attacked in-game but didn't
+  fill the web.
+- **Member** (`/war/:id`): build up to **5 attack teams**. A hero **cannot be reused across
+  your own teams** — enforced server-side (`/api/wars/:id/attacks` returns 409 with the
+  conflicting unit ids).
+
 ## Stack
 
 - Next.js 14 (App Router) + TypeScript
@@ -96,6 +111,8 @@ hosted Postgres so data persists:
 2. In your host (e.g. **Vercel**), set env vars:
    - `DATABASE_URL` = the connection string
    - `PGSSL` = `true`
+   - `ADMIN_PASSWORD`, `MEMBER_PASSWORD` = login passwords (see `.env.example`)
+   - `AUTH_SECRET` = a long random string (signs the session cookie)
 3. Deploy. On the first request the schema is created and the roster auto-seeds.
 
 Because portraits are stored as **links** (not bytes), the database stays well within free

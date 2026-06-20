@@ -82,3 +82,67 @@ export function emptyFormation(): Formation {
     pet: emptySlot(),
   };
 }
+
+/** All non-empty unit ids in a formation (characters + pet). */
+export function formationUnitIds(f: Formation): string[] {
+  const ids: string[] = [];
+  for (const s of [...f.back, ...f.front, f.pet]) {
+    if (s?.unitId) ids.push(s.unitId);
+  }
+  return ids;
+}
+
+// ---------------------------------------------------------------------------
+// Guild war
+// ---------------------------------------------------------------------------
+
+/** How many attack teams each member may field per war. */
+export const ATTACK_SLOTS = 5;
+
+export type Role = "admin" | "member";
+
+export interface Session {
+  role: Role;
+  /** Set for member sessions. */
+  memberId?: string;
+  name?: string;
+}
+
+export interface Member {
+  id: string;
+  name: string;
+  createdAt: string;
+}
+
+export interface War {
+  id: string;
+  /** Target guild name. */
+  name: string;
+  active: boolean;
+  createdAt: string;
+}
+
+/** An enemy formation the guild needs to break. */
+export interface DefenseTeam {
+  id: string;
+  warId: string;
+  label: string;
+  formation: Formation;
+  sortOrder: number;
+  createdAt: string;
+}
+
+/** One of a member's attack teams within a war. */
+export interface AttackTeam {
+  id: string;
+  warId: string;
+  memberId: string;
+  /** 1..ATTACK_SLOTS */
+  slot: number;
+  /** May be null when an admin only marks an in-game attack as done. */
+  formation: Formation | null;
+  targetDefenseId: string | null;
+  done: boolean;
+  createdAt: string;
+  updatedAt: string;
+}

@@ -1,17 +1,25 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { CATEGORIES, Unit } from "@/lib/types";
 import { useUnits } from "@/lib/units-context";
+import { useAuth } from "@/lib/auth-context";
 import { Portrait, Stars } from "@/components/Portrait";
 import { UnitEditorModal } from "@/components/UnitEditorModal";
 
 export default function CharactersAdminPage() {
   const { units, loading, error, reload } = useUnits();
+  const { loading: authLoading, isAdmin } = useAuth();
+  const router = useRouter();
   const [editor, setEditor] = useState<{ unit: Unit | null } | null>(null);
   const [query, setQuery] = useState("");
   const [busyId, setBusyId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!authLoading && !isAdmin) router.replace("/login");
+  }, [authLoading, isAdmin, router]);
 
   const filtered = useMemo(() => {
     const q = query.trim();
@@ -47,8 +55,8 @@ export default function CharactersAdminPage() {
     <main className="mx-auto max-w-5xl px-4 py-8">
       <header className="mb-6 flex flex-wrap items-center justify-between gap-4">
         <div>
-          <Link href="/" className="text-sm text-gray-400 hover:text-gray-600">
-            ← กลับหน้าจัดทีม
+          <Link href="/admin" className="text-sm text-gray-400 hover:text-gray-600">
+            ← กลับหน้าจัดการ
           </Link>
           <h1 className="text-2xl font-extrabold tracking-tight">จัดการตัวละคร</h1>
           <p className="text-sm text-gray-500">

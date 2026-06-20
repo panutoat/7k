@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { createUnit, listUnits } from "@/lib/db";
 import { parseUnitInput } from "@/lib/units-validate";
+import { requireAdmin } from "@/lib/auth";
+import { fail } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
 
@@ -9,12 +11,13 @@ export async function GET() {
     const units = await listUnits();
     return NextResponse.json({ units });
   } catch (err) {
-    return NextResponse.json({ error: message(err) }, { status: 500 });
+    return fail(err);
   }
 }
 
 export async function POST(req: Request) {
   try {
+    requireAdmin();
     const body = (await req.json()) as Record<string, unknown>;
     const parsed = parseUnitInput(body);
     if ("error" in parsed) {
@@ -23,10 +26,6 @@ export async function POST(req: Request) {
     const unit = await createUnit(parsed.value);
     return NextResponse.json({ unit }, { status: 201 });
   } catch (err) {
-    return NextResponse.json({ error: message(err) }, { status: 500 });
+    return fail(err);
   }
-}
-
-function message(err: unknown): string {
-  return err instanceof Error ? err.message : "unknown error";
 }

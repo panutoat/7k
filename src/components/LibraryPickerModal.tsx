@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { LibraryDefense } from "@/lib/types";
 import { FormationPreview } from "./FormationPreview";
+import { LibraryEditModal } from "./LibraryEditModal";
 
 /** Admin: pick a saved defense from the central library into the current war. */
 export function LibraryPickerModal({
@@ -16,6 +17,7 @@ export function LibraryPickerModal({
 }) {
   const [library, setLibrary] = useState<LibraryDefense[]>([]);
   const [busy, setBusy] = useState(true);
+  const [editing, setEditing] = useState<LibraryDefense | null>(null);
 
   const load = useCallback(async () => {
     setBusy(true);
@@ -67,16 +69,24 @@ export function LibraryPickerModal({
                   key={e.id}
                   className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm"
                 >
-                  <div className="mb-2 flex items-center justify-between">
+                  <div className="mb-2 flex items-center justify-between gap-2">
                     <span className="truncate text-sm font-semibold">
                       {e.label || "ไม่มีชื่อ"}
                     </span>
-                    <button
-                      onClick={() => remove(e.id)}
-                      className="text-xs text-gray-300 hover:text-red-500"
-                    >
-                      ลบ
-                    </button>
+                    <span className="flex shrink-0 items-center gap-2">
+                      <button
+                        onClick={() => setEditing(e)}
+                        className="text-xs text-gray-400 hover:text-rose-500"
+                      >
+                        แก้ไข
+                      </button>
+                      <button
+                        onClick={() => remove(e.id)}
+                        className="text-xs text-gray-300 hover:text-red-500"
+                      >
+                        ลบ
+                      </button>
+                    </span>
                   </div>
                   <FormationPreview formation={e.formation} size={34} />
                   <button
@@ -100,6 +110,17 @@ export function LibraryPickerModal({
           </button>
         </div>
       </div>
+
+      {editing && (
+        <LibraryEditModal
+          entry={editing}
+          onClose={() => setEditing(null)}
+          onSaved={() => {
+            setEditing(null);
+            load();
+          }}
+        />
+      )}
     </div>
   );
 }

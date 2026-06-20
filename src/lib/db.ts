@@ -602,6 +602,20 @@ export async function createLibrary(input: {
   return toLibrary(rows[0]);
 }
 
+export async function updateLibrary(
+  id: string,
+  input: { label: string; formation: Formation; link: string | null }
+): Promise<LibraryDefense | null> {
+  await ensureSchema();
+  const { rows } = await getPool().query<LibraryRow>(
+    `UPDATE defense_library SET label = $2, formation = $3, link = $4
+     WHERE id = $1
+     RETURNING id, label, formation, link, created_at`,
+    [id, input.label, JSON.stringify(input.formation), input.link]
+  );
+  return rows[0] ? toLibrary(rows[0]) : null;
+}
+
 export async function deleteLibrary(id: string): Promise<boolean> {
   await ensureSchema();
   const { rowCount } = await getPool().query(

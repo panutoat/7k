@@ -50,6 +50,7 @@ export function AttackTeamModal({
   const [conflicts, setConflicts] = useState<string[]>([]);
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [defenseQuery, setDefenseQuery] = useState("");
 
   useEffect(() => {
     fetch(`/api/wars/${warId}/my-history`)
@@ -120,8 +121,26 @@ export function AttackTeamModal({
             {defenses.length === 0 ? (
               <p className="text-xs text-gray-400">ยังไม่มีทีมป้องกัน</p>
             ) : (
-              <div className="grid max-h-60 grid-cols-2 gap-2 overflow-y-auto sm:grid-cols-3">
-                {defenses.map((d, i) => {
+              <>
+                <input
+                  value={defenseQuery}
+                  onChange={(e) => setDefenseQuery(e.target.value)}
+                  placeholder="ค้นหาทีมป้องกัน (ชื่อ / เลข #)..."
+                  className="mb-2 w-full rounded-xl border border-gray-200 px-3 py-1.5 text-sm outline-none focus:border-rose-300"
+                />
+                <div className="grid max-h-60 grid-cols-2 gap-2 overflow-y-auto sm:grid-cols-3">
+                {defenses
+                  .map((d, i) => ({ d, i }))
+                  .filter(({ d, i }) => {
+                    const q = defenseQuery.trim().toLowerCase();
+                    if (!q) return true;
+                    return (
+                      (d.label || "").toLowerCase().includes(q) ||
+                      `#${i + 1}`.includes(q) ||
+                      String(i + 1) === q
+                    );
+                  })
+                  .map(({ d, i }) => {
                   const active = targetId === d.id;
                   return (
                     <button
@@ -142,7 +161,8 @@ export function AttackTeamModal({
                     </button>
                   );
                 })}
-              </div>
+                </div>
+              </>
             )}
           </div>
 

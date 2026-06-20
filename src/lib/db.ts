@@ -5,7 +5,6 @@ import {
   Formation,
   formationUnitIds,
   Member,
-  Team,
   Unit,
   UnitKind,
   War,
@@ -126,53 +125,6 @@ export function ensureSchema(): Promise<void> {
       });
   }
   return global._pgReady;
-}
-
-interface TeamRow {
-  id: string;
-  name: string;
-  enemy_type: Team["enemyType"];
-  formation: Formation;
-  created_at: Date;
-}
-
-function rowToTeam(r: TeamRow): Team {
-  return {
-    id: r.id,
-    name: r.name,
-    enemyType: r.enemy_type,
-    formation: r.formation,
-    createdAt: r.created_at.toISOString(),
-  };
-}
-
-export async function listTeams(): Promise<Team[]> {
-  await ensureSchema();
-  const { rows } = await getPool().query<TeamRow>(
-    "SELECT id, name, enemy_type, formation, created_at FROM teams ORDER BY created_at DESC"
-  );
-  return rows.map(rowToTeam);
-}
-
-export async function createTeam(input: {
-  name: string;
-  enemyType: Team["enemyType"];
-  formation: Formation;
-}): Promise<Team> {
-  await ensureSchema();
-  const { rows } = await getPool().query<TeamRow>(
-    `INSERT INTO teams (name, enemy_type, formation)
-     VALUES ($1, $2, $3)
-     RETURNING id, name, enemy_type, formation, created_at`,
-    [input.name, input.enemyType, JSON.stringify(input.formation)]
-  );
-  return rowToTeam(rows[0]);
-}
-
-export async function deleteTeam(id: string): Promise<boolean> {
-  await ensureSchema();
-  const { rowCount } = await getPool().query("DELETE FROM teams WHERE id = $1", [id]);
-  return (rowCount ?? 0) > 0;
 }
 
 // ---------------------------------------------------------------------------

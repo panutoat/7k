@@ -41,9 +41,6 @@ function SlotCell({
           {unit ? (
             <>
               <Portrait unit={unit} size={70} />
-              <span className="absolute right-1 top-1 grid h-4 w-4 place-items-center rounded-full bg-yellow-400 text-[10px] font-bold text-white">
-                {slot.order ?? ""}
-              </span>
               <button
                 type="button"
                 onClick={(e) => {
@@ -65,24 +62,31 @@ function SlotCell({
         </span>
       </div>
 
-      {/* T / B skill-order toggles */}
+      {/* T / B skill-order toggles — each track is independent. */}
       <div className="flex flex-col gap-1">
         {(["T", "B"] as SkillTrack[]).map((track) => {
-          const active = slot.track === track;
+          const orderNo = track === "T" ? slot.top : slot.bottom;
+          const active = orderNo != null;
           return (
             <button
               key={track}
               type="button"
               disabled={!unit}
               onClick={() => onToggle(refObj, track)}
-              className="grid h-6 w-6 place-items-center rounded-full border text-xs font-bold transition disabled:opacity-30"
+              className="relative grid h-6 w-6 place-items-center rounded-full border text-xs font-bold transition disabled:opacity-30"
               style={
                 active
                   ? { background: lineColor, color: "#fff", borderColor: lineColor }
                   : { background: "#fff", color: "#9ca3af", borderColor: "#e5e7eb" }
               }
+              title={track === "T" ? "สกิลบน" : "สกิลล่าง"}
             >
               {track}
+              {active && (
+                <span className="absolute -right-1.5 -top-1.5 grid h-3.5 w-3.5 place-items-center rounded-full bg-yellow-400 text-[9px] font-bold text-white">
+                  {orderNo}
+                </span>
+              )}
             </button>
           );
         })}

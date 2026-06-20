@@ -163,6 +163,33 @@ export default function MemberWarPage() {
         })}
       </div>
 
+      {/* Enemy defenses — read-only reference */}
+      <section className="mt-8">
+        <h2 className="mb-3 text-lg font-bold">
+          ทีมป้องกันของศัตรู ({defenses.length})
+        </h2>
+        {defenses.length === 0 ? (
+          <p className="rounded-2xl border border-dashed border-gray-200 bg-white p-6 text-center text-sm text-gray-400">
+            แอดมินยังไม่ได้ใส่ทีมป้องกัน
+          </p>
+        ) : (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {defenses.map((d, i) => (
+              <div
+                key={d.id}
+                className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm"
+              >
+                <p className="mb-2 text-sm font-semibold text-gray-600">
+                  #{i + 1}
+                  {d.label ? ` · ${d.label}` : ""}
+                </p>
+                <FormationPreview formation={d.formation} size={38} />
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
       {editSlot != null && (
         <AttackTeamModal
           warId={id}

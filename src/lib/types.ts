@@ -48,10 +48,10 @@ export type SkillTrack = "T" | "B";
 
 export interface Slot {
   unitId: string | null;
-  /** Which track the unit's skill belongs to (max 3 across the formation). */
-  track: SkillTrack | null;
-  /** Skill order number 1-3 (set when a track is chosen). */
-  order: number | null;
+  /** Skill-order number (1..MAX_SKILL_ORDER) for this unit's TOP skill, or null. */
+  top: number | null;
+  /** Skill-order number for this unit's BOTTOM skill, or null. */
+  bottom: number | null;
 }
 
 export interface Formation {
@@ -63,16 +63,13 @@ export interface Formation {
   pet: Slot;
 }
 
-export interface Team {
-  id: string;
-  name: string;
-  enemyType: EnemyType;
-  formation: Formation;
-  createdAt: string;
-}
+/** Max heroes (characters) placeable in one team. */
+export const MAX_HEROES = 3;
+/** Max total skill-order reservations across both tracks. */
+export const MAX_SKILL_ORDER = 3;
 
 export function emptySlot(): Slot {
-  return { unitId: null, track: null, order: null };
+  return { unitId: null, top: null, bottom: null };
 }
 
 export function emptyFormation(): Formation {
@@ -90,6 +87,19 @@ export function formationUnitIds(f: Formation): string[] {
     if (s?.unitId) ids.push(s.unitId);
   }
   return ids;
+}
+
+/** Hero unit ids only (back + front rows; excludes the pet). */
+export function formationHeroIds(f: Formation): string[] {
+  return [...f.back, ...f.front].filter((s) => s?.unitId).map((s) => s.unitId!);
+}
+
+/** Count of skill-order reservations across both tracks of all slots. */
+export function orderedCount(f: Formation): number {
+  return [...f.back, ...f.front, f.pet].reduce(
+    (n, s) => n + (s.top != null ? 1 : 0) + (s.bottom != null ? 1 : 0),
+    0
+  );
 }
 
 // ---------------------------------------------------------------------------

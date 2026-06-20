@@ -3,15 +3,17 @@
 import { useState } from "react";
 import {
   Formation,
+  MAX_HEROES,
+  MAX_SKILL_ORDER,
   SkillTrack,
   Slot,
+  formationHeroIds,
   formationUnitIds,
+  orderedCount,
 } from "@/lib/types";
 import { FormationGrid, SlotRef } from "./FormationGrid";
 import { CharacterPicker } from "./CharacterPicker";
 import { FullRosterModal } from "./FullRosterModal";
-
-const MAX_ORDERED = 3;
 
 function clone(f: Formation): Formation {
   return JSON.parse(JSON.stringify(f));
@@ -27,11 +29,17 @@ function setSlot(f: Formation, ref: SlotRef, slot: Slot) {
 function allSlots(f: Formation): Slot[] {
   return [...f.back, ...f.front, f.pet];
 }
+
+/** Re-pack the skill-order numbers across both tracks to a tight 1..n. */
 function renumber(f: Formation) {
-  allSlots(f)
-    .filter((s) => s.order != null)
-    .sort((a, b) => (a.order ?? 0) - (b.order ?? 0))
-    .forEach((s, i) => (s.order = i + 1));
+  const entries: { slot: Slot; key: "top" | "bottom"; val: number }[] = [];
+  for (const s of allSlots(f)) {
+    if (s.top != null) entries.push({ slot: s, key: "top", val: s.top });
+    if (s.bottom != null) entries.push({ slot: s, key: "bottom", val: s.bottom });
+  }
+  entries
+    .sort((a, b) => a.val - b.val)
+    .forEach((e, i) => (e.slot[e.key] = i + 1));
 }
 
 /**
@@ -75,8 +83,16 @@ export function FormationEditor({
     }
     const target = activeSlot ?? firstEmpty();
     if (!target) return;
+    // Cap heroes (back/front rows) at MAX_HEROES; the pet slot is separate.
+    if (target.row !== "pet") {
+      const replacing = getSlot(value, target).unitId != null;
+      if (!replacing && formationHeroIds(value).length >= MAX_HEROES) {
+        setError(`เลือกฮีโร่ได้สูงสุด ${MAX_HEROES} ตัว`);
+        return;
+      }
+    }
     const next = clone(value);
-    setSlot(next, target, { unitId: unit.id, track: null, order: null });
+    setSlot(next, target, { unitId: unit.id, top: null, bottom: null });
     onChange(next);
     setActiveSlot(null);
     setError(null);
@@ -86,19 +102,15 @@ export function FormationEditor({
     const next = clone(value);
     const slot = getSlot(next, ref);
     if (!slot.unitId) return;
-    if (slot.track === track) {
-      slot.track = null;
-      slot.order = null;
+    const key = track === "T" ? "top" : "bottom";
+    if (slot[key] != null) {
+      slot[key] = null; // un-reserve this track
     } else {
-      const orderedCount = allSlots(next).filter((s) => s.order != null).length;
-      if (slot.order == null) {
-        if (orderedCount >= MAX_ORDERED) {
-          setError(`กำหนดลำดับสกิลได้สูงสุด ${MAX_ORDERED} ตัว`);
-          return;
-        }
-        slot.order = orderedCount + 1;
+      if (orderedCount(next) >= MAX_SKILL_ORDER) {
+        setError(`กำหนดลำดับสกิลได้สูงสุด ${MAX_SKILL_ORDER} ลำดับ`);
+        return;
       }
-      slot.track = track;
+      slot[key] = orderedCount(next) + 1;
     }
     renumber(next);
     setError(null);
@@ -107,7 +119,7 @@ export function FormationEditor({
 
   function clearSlot(ref: SlotRef) {
     const next = clone(value);
-    setSlot(next, ref, { unitId: null, track: null, order: null });
+    setSlot(next, ref, { unitId: null, top: null, bottom: null });
     renumber(next);
     onChange(next);
   }

@@ -19,9 +19,14 @@ function MiniSlot({ slot, line, size = 40 }: { slot: Slot; line: string; size?: 
       <div className="rounded-lg p-[2px]" style={{ background: line }}>
         <Portrait unit={unit} size={size} />
       </div>
-      {slot.order != null && (
+      {slot.top != null && (
         <span className="absolute -right-1 -top-1 grid h-4 w-4 place-items-center rounded-full bg-yellow-400 text-[10px] font-bold text-white">
-          {slot.order}
+          {slot.top}
+        </span>
+      )}
+      {slot.bottom != null && (
+        <span className="absolute -bottom-1 -right-1 grid h-4 w-4 place-items-center rounded-full bg-sky-400 text-[10px] font-bold text-white">
+          {slot.bottom}
         </span>
       )}
     </div>

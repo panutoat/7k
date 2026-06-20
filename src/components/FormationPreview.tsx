@@ -1,8 +1,12 @@
 "use client";
 
-import { Formation, Slot } from "@/lib/types";
+import { Formation, FORMATION_TYPES, Slot } from "@/lib/types";
 import { useUnits } from "@/lib/units-context";
 import { Portrait } from "./Portrait";
+
+function typeLabel(t: Formation["type"]): string {
+  return FORMATION_TYPES.find((x) => x.id === (t ?? "basic"))?.label ?? "พื้นฐาน";
+}
 
 function MiniSlot({ slot, line, size = 40 }: { slot: Slot; line: string; size?: number }) {
   const { getUnit } = useUnits();
@@ -37,25 +41,34 @@ function MiniSlot({ slot, line, size = 40 }: { slot: Slot; line: string; size?: 
 export function FormationPreview({
   formation,
   size = 40,
+  showType = true,
 }: {
   formation: Formation;
   size?: number;
+  showType?: boolean;
 }) {
   return (
-    <div className="flex items-end gap-4">
-      <div className="space-y-1.5">
-        <div className="flex gap-1.5">
-          {formation.back.map((s, i) => (
-            <MiniSlot key={`b${i}`} slot={s} line="#ef6b78" size={size} />
-          ))}
+    <div className="space-y-1.5">
+      {showType && (
+        <span className="inline-block rounded-full bg-gray-100 px-2 py-0.5 text-[11px] font-medium text-gray-500">
+          {typeLabel(formation.type)}
+        </span>
+      )}
+      <div className="flex items-end gap-4">
+        <div className="space-y-1.5">
+          <div className="flex gap-1.5">
+            {formation.back.map((s, i) => (
+              <MiniSlot key={`b${i}`} slot={s} line="#ef6b78" size={size} />
+            ))}
+          </div>
+          <div className="flex gap-1.5">
+            {formation.front.map((s, i) => (
+              <MiniSlot key={`f${i}`} slot={s} line="#7aa2f7" size={size} />
+            ))}
+          </div>
         </div>
-        <div className="flex gap-1.5">
-          {formation.front.map((s, i) => (
-            <MiniSlot key={`f${i}`} slot={s} line="#7aa2f7" size={size} />
-          ))}
-        </div>
+        <MiniSlot slot={formation.pet} line="#c084fc" size={size} />
       </div>
-      <MiniSlot slot={formation.pet} line="#c084fc" size={size} />
     </div>
   );
 }

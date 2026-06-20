@@ -3,6 +3,8 @@
 import { useState } from "react";
 import {
   Formation,
+  FORMATION_TYPES,
+  FormationType,
   MAX_HEROES,
   MAX_SKILL_ORDER,
   SkillTrack,
@@ -124,8 +126,43 @@ export function FormationEditor({
     onChange(next);
   }
 
+  function setType(type: FormationType) {
+    onChange({ ...clone(value), type });
+  }
+
   return (
     <div className="space-y-3">
+      {/* Formation preset (รูปแบบ) */}
+      <div>
+        <p className="mb-1.5 text-sm text-gray-500">รูปแบบ (Formation)</p>
+        <div className="flex flex-wrap gap-2">
+          {FORMATION_TYPES.map((t) => {
+            const active = (value.type ?? "basic") === t.id;
+            return (
+              <button
+                key={t.id}
+                type="button"
+                onClick={() => setType(t.id)}
+                className={`rounded-xl border px-3 py-1.5 text-left transition ${
+                  active
+                    ? "border-rose-400 bg-rose-50"
+                    : "border-gray-200 hover:bg-gray-50"
+                }`}
+              >
+                <span
+                  className={`block text-sm font-semibold ${
+                    active ? "text-rose-600" : "text-gray-700"
+                  }`}
+                >
+                  {t.label}
+                </span>
+                <span className="block text-[11px] text-gray-400">{t.hint}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {activeSlot && (
         <p className="text-sm font-medium text-rose-500">
           เลือกตัวละครจากด้านล่างเพื่อใส่ในช่องที่เลือก

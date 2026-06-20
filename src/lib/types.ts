@@ -54,6 +54,20 @@ export interface Slot {
   bottom: number | null;
 }
 
+/** Formation preset (รูปแบบ) — like 7k's basic/balanced/attack/defense. */
+export type FormationType = "basic" | "balanced" | "attack" | "defense";
+
+export const FORMATION_TYPES: {
+  id: FormationType;
+  label: string;
+  hint: string;
+}[] = [
+  { id: "basic", label: "พื้นฐาน", hint: "หลัง 3 / หน้า 2" },
+  { id: "balanced", label: "สมดุล", hint: "สมดุลโจมตี–ป้องกัน" },
+  { id: "attack", label: "โจมตี", hint: "เน้นพลังโจมตี" },
+  { id: "defense", label: "ป้องกัน", hint: "เน้นพลังป้องกัน" },
+];
+
 export interface Formation {
   /** Back row — up to 3 slots. */
   back: Slot[];
@@ -61,6 +75,8 @@ export interface Formation {
   front: Slot[];
   /** Single pet slot. */
   pet: Slot;
+  /** Chosen formation preset (defaults to "basic"). */
+  type?: FormationType;
 }
 
 /** Max heroes (characters) placeable in one team. */
@@ -77,6 +93,7 @@ export function emptyFormation(): Formation {
     back: [emptySlot(), emptySlot(), emptySlot()],
     front: [emptySlot(), emptySlot()],
     pet: emptySlot(),
+    type: "basic",
   };
 }
 

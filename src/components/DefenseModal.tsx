@@ -1,22 +1,27 @@
 "use client";
 
 import { useState } from "react";
-import { Formation, emptyFormation } from "@/lib/types";
+import { DefenseTeam, Formation, emptyFormation } from "@/lib/types";
 import { FormationEditor } from "./FormationEditor";
 
-/** Admin: add an enemy defense team to a war. */
+/** Admin: add or edit an enemy defense team. */
 export function DefenseModal({
   warId,
+  initial,
   onClose,
   onSaved,
 }: {
   warId: string;
+  /** Existing defense to edit, or undefined to create a new one. */
+  initial?: DefenseTeam;
   onClose: () => void;
   onSaved: () => void;
 }) {
-  const [label, setLabel] = useState("");
-  const [link, setLink] = useState("");
-  const [formation, setFormation] = useState<Formation>(emptyFormation());
+  const [label, setLabel] = useState(initial?.label ?? "");
+  const [link, setLink] = useState(initial?.link ?? "");
+  const [formation, setFormation] = useState<Formation>(
+    initial?.formation ?? emptyFormation()
+  );
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -24,11 +29,14 @@ export function DefenseModal({
     setSaving(true);
     setError(null);
     try {
-      const res = await fetch(`/api/wars/${warId}/defenses`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ label: label.trim(), formation, link: link.trim() }),
-      });
+      const res = await fetch(
+        initial ? `/api/defenses/${initial.id}` : `/api/wars/${warId}/defenses`,
+        {
+          method: initial ? "PUT" : "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ label: label.trim(), formation, link: link.trim() }),
+        }
+      );
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "บันทึกไม่สำเร็จ");
       onSaved();
@@ -45,7 +53,9 @@ export function DefenseModal({
         <div className="flex items-center justify-between border-b px-6 py-4">
           <div className="flex items-center gap-2">
             <span className="h-5 w-1.5 rounded bg-blue-500" />
-            <h2 className="text-lg font-bold">เพิ่มทีมป้องกัน</h2>
+            <h2 className="text-lg font-bold">
+              {initial ? "แก้ไขทีมป้องกัน" : "เพิ่มทีมป้องกัน"}
+            </h2>
           </div>
           <button onClick={onClose} className="text-2xl text-gray-400 hover:text-gray-600">
             ×

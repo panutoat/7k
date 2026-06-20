@@ -27,6 +27,7 @@ export default function AdminWarPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [busy, setBusy] = useState(true);
   const [showDefense, setShowDefense] = useState(false);
+  const [editDefense, setEditDefense] = useState<DefenseTeam | null>(null);
   const [edit, setEdit] = useState<{ member: Member; slot: number } | null>(null);
   const [sort, setSort] = useState<"name" | "done-desc" | "done-asc">("done-desc");
 
@@ -118,12 +119,20 @@ export default function AdminWarPage() {
                     #{i + 1}
                     {d.label ? ` · ${d.label}` : ""}
                   </span>
-                  <button
-                    onClick={() => deleteDefense(d.id)}
-                    className="text-xs text-gray-300 hover:text-red-500"
-                  >
-                    ลบ
-                  </button>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setEditDefense(d)}
+                      className="text-xs text-gray-400 hover:text-rose-500"
+                    >
+                      แก้ไข
+                    </button>
+                    <button
+                      onClick={() => deleteDefense(d.id)}
+                      className="text-xs text-gray-300 hover:text-red-500"
+                    >
+                      ลบ
+                    </button>
+                  </div>
                 </div>
                 <FormationPreview formation={d.formation} size={38} />
                 {d.link && (
@@ -239,12 +248,17 @@ export default function AdminWarPage() {
         )}
       </section>
 
-      {showDefense && (
+      {(showDefense || editDefense) && (
         <DefenseModal
           warId={id}
-          onClose={() => setShowDefense(false)}
+          initial={editDefense ?? undefined}
+          onClose={() => {
+            setShowDefense(false);
+            setEditDefense(null);
+          }}
           onSaved={() => {
             setShowDefense(false);
+            setEditDefense(null);
             load();
           }}
         />

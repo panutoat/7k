@@ -61,6 +61,19 @@ export default function AdminHome() {
     load();
   }
 
+  async function renameMember(m: Member) {
+    const name = window.prompt("แก้ชื่อสมาชิก", m.name);
+    if (!name || !name.trim() || name.trim() === m.name) return;
+    const res = await fetch(`/api/members/${m.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name: name.trim() }),
+    });
+    const data = await res.json();
+    if (!res.ok) return setError(data.error || "แก้ชื่อไม่สำเร็จ");
+    load();
+  }
+
   async function addWar() {
     const name = warName.trim();
     if (!name) return;
@@ -195,12 +208,20 @@ export default function AdminHome() {
                 className="flex items-center justify-between rounded-xl border border-gray-100 px-3 py-2 text-sm"
               >
                 <span className="truncate">{m.name}</span>
-                <button
-                  onClick={() => removeMember(m.id)}
-                  className="text-xs text-gray-300 hover:text-red-500"
-                >
-                  ลบ
-                </button>
+                <span className="flex items-center gap-2">
+                  <button
+                    onClick={() => renameMember(m)}
+                    className="text-xs text-gray-400 hover:text-rose-500"
+                  >
+                    แก้ชื่อ
+                  </button>
+                  <button
+                    onClick={() => removeMember(m.id)}
+                    className="text-xs text-gray-300 hover:text-red-500"
+                  >
+                    ลบ
+                  </button>
+                </span>
               </li>
             ))}
           </ul>

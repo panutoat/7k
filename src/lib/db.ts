@@ -345,6 +345,18 @@ export async function createMember(name: string): Promise<Member> {
   return toMember(rows[0]);
 }
 
+export async function renameMember(
+  id: string,
+  name: string
+): Promise<Member | null> {
+  await ensureSchema();
+  const { rows } = await getPool().query<MemberRow>(
+    "UPDATE members SET name = $2 WHERE id = $1 RETURNING id, name, created_at",
+    [id, name]
+  );
+  return rows[0] ? toMember(rows[0]) : null;
+}
+
 export async function deleteMember(id: string): Promise<boolean> {
   await ensureSchema();
   const { rowCount } = await getPool().query("DELETE FROM members WHERE id = $1", [id]);
@@ -472,6 +484,19 @@ export async function createDefense(input: {
     [input.warId, input.label, JSON.stringify(input.formation), input.link, sortOrder]
   );
   return toDefense(rows[0]);
+}
+
+export async function updateDefense(
+  id: string,
+  input: { label: string; formation: Formation; link: string | null }
+): Promise<DefenseTeam | null> {
+  await ensureSchema();
+  const { rows } = await getPool().query<DefenseRow>(
+    `UPDATE defense_teams SET label = $2, formation = $3, link = $4
+     WHERE id = $1 RETURNING ${DEFENSE_COLS}`,
+    [id, input.label, JSON.stringify(input.formation), input.link]
+  );
+  return rows[0] ? toDefense(rows[0]) : null;
 }
 
 export async function deleteDefense(id: string): Promise<boolean> {

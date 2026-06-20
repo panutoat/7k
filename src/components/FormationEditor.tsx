@@ -12,6 +12,7 @@ import {
   formationHeroIds,
   formationUnitIds,
   orderedCount,
+  reshapeFormation,
 } from "@/lib/types";
 import { FormationGrid, SlotRef } from "./FormationGrid";
 import { CharacterPicker } from "./CharacterPicker";
@@ -127,7 +128,7 @@ export function FormationEditor({
   }
 
   function setType(type: FormationType) {
-    onChange({ ...clone(value), type });
+    onChange(reshapeFormation(value, type));
   }
 
   return (

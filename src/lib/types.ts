@@ -84,8 +84,43 @@ export const MAX_HEROES = 3;
 /** Max total skill-order reservations across both tracks. */
 export const MAX_SKILL_ORDER = 3;
 
+/** Back/front slot split for each formation preset (always 5 hero slots). */
+export function layoutFor(type: FormationType | undefined): {
+  back: number;
+  front: number;
+} {
+  switch (type) {
+    case "balanced":
+      return { back: 2, front: 3 };
+    case "attack":
+      return { back: 4, front: 1 };
+    case "defense":
+      return { back: 1, front: 4 };
+    case "basic":
+    default:
+      return { back: 3, front: 2 };
+  }
+}
+
 export function emptySlot(): Slot {
   return { unitId: null, top: null, bottom: null };
+}
+
+/**
+ * Re-split the back/front rows for a new formation preset, keeping already
+ * placed heroes (and their skill orders). Heroes compact toward the start.
+ */
+export function reshapeFormation(f: Formation, type: FormationType): Formation {
+  const { back, front } = layoutFor(type);
+  const placed = [...f.back, ...f.front].filter((s) => s.unitId);
+  const slots: Slot[] = [];
+  for (let i = 0; i < back + front; i++) slots.push(placed[i] ?? emptySlot());
+  return {
+    type,
+    back: slots.slice(0, back),
+    front: slots.slice(back, back + front),
+    pet: f.pet,
+  };
 }
 
 export function emptyFormation(): Formation {

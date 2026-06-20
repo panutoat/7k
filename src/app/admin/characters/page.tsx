@@ -122,7 +122,7 @@ export default function CharactersAdminPage() {
                         key={u.id}
                         className="flex items-center gap-3 rounded-2xl border border-gray-100 bg-white p-3 shadow-sm"
                       >
-                        <div className="rounded-lg bg-gradient-to-b from-amber-300 to-amber-500 p-[2px]">
+                        <div className="shrink-0">
                           <Portrait unit={u} size={56} />
                           <Stars count={u.stars} />
                         </div>

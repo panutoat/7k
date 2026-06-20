@@ -129,9 +129,7 @@ export function UnitEditorModal({
         <div className="space-y-4 px-6 py-5">
           <div className="flex items-start gap-4">
             <div className="flex flex-col items-center gap-2">
-              <div className="rounded-xl bg-gradient-to-b from-amber-300 to-amber-500 p-[3px]">
-                <Portrait unit={previewUnit} size={84} />
-              </div>
+              <Portrait unit={previewUnit} size={84} />
               <button
                 type="button"
                 onClick={() => fileRef.current?.click()}

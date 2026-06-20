@@ -19,7 +19,7 @@ export function UnitTile({
       className="flex w-[84px] shrink-0 flex-col items-center gap-1 rounded-xl p-1.5 transition hover:bg-rose-50"
       title={unit.name}
     >
-      <div className="rounded-lg bg-gradient-to-b from-amber-300 to-amber-500 p-[3px]">
+      <div>
         <Portrait unit={unit} size={size} />
         <Stars count={unit.stars} />
       </div>

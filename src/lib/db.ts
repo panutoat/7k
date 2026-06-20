@@ -72,6 +72,7 @@ CREATE TABLE IF NOT EXISTS defense_teams (
   war_id      UUID NOT NULL REFERENCES wars(id) ON DELETE CASCADE,
   label       TEXT NOT NULL DEFAULT '',
   formation   JSONB NOT NULL,
+  link        TEXT,
   sort_order  INT  NOT NULL DEFAULT 0,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -83,11 +84,16 @@ CREATE TABLE IF NOT EXISTS attack_teams (
   slot            INT  NOT NULL,
   formation       JSONB,
   target_defense_id UUID REFERENCES defense_teams(id) ON DELETE SET NULL,
+  link            TEXT,
   done            BOOLEAN NOT NULL DEFAULT false,
   created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (war_id, member_id, slot)
 );
+
+-- Migrations for DBs created before the link column existed.
+ALTER TABLE defense_teams ADD COLUMN IF NOT EXISTS link TEXT;
+ALTER TABLE attack_teams  ADD COLUMN IF NOT EXISTS link TEXT;
 
 CREATE INDEX IF NOT EXISTS defense_war_idx ON defense_teams (war_id, sort_order);
 CREATE INDEX IF NOT EXISTS attack_war_member_idx ON attack_teams (war_id, member_id);
@@ -419,6 +425,7 @@ interface DefenseRow {
   war_id: string;
   label: string;
   formation: Formation;
+  link: string | null;
   sort_order: number;
   created_at: Date;
 }
@@ -427,15 +434,17 @@ const toDefense = (r: DefenseRow): DefenseTeam => ({
   warId: r.war_id,
   label: r.label,
   formation: r.formation,
+  link: r.link,
   sortOrder: r.sort_order,
   createdAt: new Date(r.created_at).toISOString(),
 });
 
+const DEFENSE_COLS = "id, war_id, label, formation, link, sort_order, created_at";
+
 export async function listDefenses(warId: string): Promise<DefenseTeam[]> {
   await ensureSchema();
   const { rows } = await getPool().query<DefenseRow>(
-    `SELECT id, war_id, label, formation, sort_order, created_at
-     FROM defense_teams WHERE war_id = $1 ORDER BY sort_order, created_at`,
+    `SELECT ${DEFENSE_COLS} FROM defense_teams WHERE war_id = $1 ORDER BY sort_order, created_at`,
     [warId]
   );
   return rows.map(toDefense);
@@ -445,6 +454,7 @@ export async function createDefense(input: {
   warId: string;
   label: string;
   formation: Formation;
+  link: string | null;
 }): Promise<DefenseTeam> {
   await ensureSchema();
   const pool = getPool();
@@ -454,10 +464,10 @@ export async function createDefense(input: {
   );
   const sortOrder = (maxRows[0]?.m ?? 0) + 1;
   const { rows } = await pool.query<DefenseRow>(
-    `INSERT INTO defense_teams (war_id, label, formation, sort_order)
-     VALUES ($1, $2, $3, $4)
-     RETURNING id, war_id, label, formation, sort_order, created_at`,
-    [input.warId, input.label, JSON.stringify(input.formation), sortOrder]
+    `INSERT INTO defense_teams (war_id, label, formation, link, sort_order)
+     VALUES ($1, $2, $3, $4, $5)
+     RETURNING ${DEFENSE_COLS}`,
+    [input.warId, input.label, JSON.stringify(input.formation), input.link, sortOrder]
   );
   return toDefense(rows[0]);
 }
@@ -479,6 +489,7 @@ interface AttackRow {
   slot: number;
   formation: Formation | null;
   target_defense_id: string | null;
+  link: string | null;
   done: boolean;
   created_at: Date;
   updated_at: Date;
@@ -490,13 +501,14 @@ const toAttack = (r: AttackRow): AttackTeam => ({
   slot: r.slot,
   formation: r.formation,
   targetDefenseId: r.target_defense_id,
+  link: r.link,
   done: r.done,
   createdAt: new Date(r.created_at).toISOString(),
   updatedAt: new Date(r.updated_at).toISOString(),
 });
 
 const ATTACK_COLS =
-  "id, war_id, member_id, slot, formation, target_defense_id, done, created_at, updated_at";
+  "id, war_id, member_id, slot, formation, target_defense_id, link, done, created_at, updated_at";
 
 export async function listAttacks(
   warId: string,
@@ -546,15 +558,17 @@ export async function upsertAttack(input: {
   slot: number;
   formation: Formation | null;
   targetDefenseId: string | null;
+  link: string | null;
   done: boolean;
 }): Promise<AttackTeam> {
   await ensureSchema();
   const { rows } = await getPool().query<AttackRow>(
-    `INSERT INTO attack_teams (war_id, member_id, slot, formation, target_defense_id, done)
-     VALUES ($1, $2, $3, $4, $5, $6)
+    `INSERT INTO attack_teams (war_id, member_id, slot, formation, target_defense_id, link, done)
+     VALUES ($1, $2, $3, $4, $5, $6, $7)
      ON CONFLICT (war_id, member_id, slot) DO UPDATE SET
        formation = EXCLUDED.formation,
        target_defense_id = EXCLUDED.target_defense_id,
+       link = EXCLUDED.link,
        done = EXCLUDED.done,
        updated_at = now()
      RETURNING ${ATTACK_COLS}`,
@@ -564,6 +578,7 @@ export async function upsertAttack(input: {
       input.slot,
       input.formation ? JSON.stringify(input.formation) : null,
       input.targetDefenseId,
+      input.link,
       input.done,
     ]
   );

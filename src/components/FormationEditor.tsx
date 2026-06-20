@@ -63,8 +63,15 @@ export function FormationEditor({
   blockedUnitIds?: Set<string>;
 }) {
   const [activeSlot, setActiveSlot] = useState<SlotRef | null>(null);
+  const [pickerKind, setPickerKind] = useState<"character" | "pet">("character");
   const [showRoster, setShowRoster] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Clicking a slot focuses it and jumps the picker to the right tab.
+  function focusSlot(ref: SlotRef) {
+    setActiveSlot(ref);
+    setPickerKind(ref.row === "pet" ? "pet" : "character");
+  }
 
   function firstEmpty(): SlotRef | null {
     const order: SlotRef[] = [
@@ -171,13 +178,14 @@ export function FormationEditor({
       )}
       <FormationGrid
         formation={value}
-        onPick={(ref) => setActiveSlot(ref)}
+        onPick={focusSlot}
         onToggle={toggleTrack}
         onClear={clearSlot}
       />
       <CharacterPicker
         onPick={placeUnit}
         onOpenFullRoster={() => setShowRoster(true)}
+        kind={pickerKind}
       />
       {error && <p className="text-sm text-red-500">{error}</p>}
 

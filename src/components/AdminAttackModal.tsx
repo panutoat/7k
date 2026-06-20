@@ -49,6 +49,7 @@ export function AdminAttackModal({
           slot,
           formation: existing?.formation ?? null,
           targetDefenseId: targetId,
+          link: existing?.link ?? null,
           done,
         }),
       });

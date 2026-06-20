@@ -1,20 +1,28 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { Unit } from "@/lib/types";
+import { useEffect, useMemo, useState } from "react";
+import { Unit, UnitKind } from "@/lib/types";
 import { useUnits } from "@/lib/units-context";
 import { UnitTile } from "./UnitTile";
 
 export function CharacterPicker({
   onPick,
   onOpenFullRoster,
+  kind: kindProp,
 }: {
   onPick: (unit: Unit) => void;
   onOpenFullRoster: () => void;
+  /** When set, forces the active tab (character/pet) from the parent. */
+  kind?: UnitKind;
 }) {
   const { units } = useUnits();
-  const [kind, setKind] = useState<"character" | "pet">("character");
+  const [kind, setKind] = useState<UnitKind>("character");
   const [query, setQuery] = useState("");
+
+  // Follow the parent-controlled tab (e.g. clicking the pet slot → pet tab).
+  useEffect(() => {
+    if (kindProp) setKind(kindProp);
+  }, [kindProp]);
 
   const list = useMemo(() => {
     const source = units.filter((u) => u.kind === kind);

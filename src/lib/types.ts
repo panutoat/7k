@@ -190,6 +190,8 @@ export interface DefenseTeam {
   warId: string;
   label: string;
   formation: Formation;
+  /** Optional 7k-combo (or any) reference link. */
+  link: string | null;
   sortOrder: number;
   createdAt: string;
 }
@@ -204,6 +206,8 @@ export interface AttackTeam {
   /** May be null when an admin only marks an in-game attack as done. */
   formation: Formation | null;
   targetDefenseId: string | null;
+  /** Optional 7k-combo (or any) reference link. */
+  link: string | null;
   done: boolean;
   createdAt: string;
   updatedAt: string;

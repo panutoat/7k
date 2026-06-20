@@ -32,6 +32,7 @@ export async function POST(
       slot?: number;
       formation?: Formation | null;
       targetDefenseId?: string | null;
+      link?: string | null;
       done?: boolean;
     };
 
@@ -69,6 +70,7 @@ export async function POST(
       slot,
       formation,
       targetDefenseId: body.targetDefenseId ?? null,
+      link: typeof body.link === "string" ? body.link.trim() || null : null,
       done: Boolean(body.done),
     });
     return NextResponse.json({ attack }, { status: 201 });

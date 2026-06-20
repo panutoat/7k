@@ -25,7 +25,11 @@ export async function POST(
 ) {
   try {
     requireAdmin();
-    const body = (await req.json()) as { label?: string; formation?: Formation };
+    const body = (await req.json()) as {
+      label?: string;
+      formation?: Formation;
+      link?: string;
+    };
     if (!body.formation || !body.formation.back || !body.formation.front) {
       return NextResponse.json({ error: "invalid formation" }, { status: 400 });
     }
@@ -33,6 +37,7 @@ export async function POST(
       warId: params.id,
       label: (body.label || "").trim(),
       formation: body.formation,
+      link: (body.link || "").trim() || null,
     });
     return NextResponse.json({ defense }, { status: 201 });
   } catch (err) {

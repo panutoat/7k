@@ -170,6 +170,17 @@ export default function MemberWarPage() {
                   >
                     — {atk.done ? "ตีแล้ว" : "ยังไม่ตี"}
                   </span>
+                  {atk.link && (
+                    <a
+                      href={atk.link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="ml-2 font-medium text-blue-500 hover:underline"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      🔗 7k-combo
+                    </a>
+                  )}
                 </div>
               )}
             </div>
@@ -198,6 +209,16 @@ export default function MemberWarPage() {
                   {d.label ? ` · ${d.label}` : ""}
                 </p>
                 <FormationPreview formation={d.formation} size={38} />
+                {d.link && (
+                  <a
+                    href={d.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-block text-xs font-medium text-blue-500 hover:underline"
+                  >
+                    🔗 7k-combo
+                  </a>
+                )}
               </div>
             ))}
           </div>

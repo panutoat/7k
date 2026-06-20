@@ -110,6 +110,16 @@ export default function AdminWarPage() {
                   </button>
                 </div>
                 <FormationPreview formation={d.formation} size={38} />
+                {d.link && (
+                  <a
+                    href={d.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-block text-xs font-medium text-blue-500 hover:underline"
+                  >
+                    🔗 7k-combo
+                  </a>
+                )}
               </div>
             ))}
           </div>

@@ -15,6 +15,7 @@ export function DefenseModal({
   onSaved: () => void;
 }) {
   const [label, setLabel] = useState("");
+  const [link, setLink] = useState("");
   const [formation, setFormation] = useState<Formation>(emptyFormation());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +27,7 @@ export function DefenseModal({
       const res = await fetch(`/api/wars/${warId}/defenses`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ label: label.trim(), formation }),
+        body: JSON.stringify({ label: label.trim(), formation, link: link.trim() }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "บันทึกไม่สำเร็จ");
@@ -58,6 +59,17 @@ export function DefenseModal({
               value={label}
               onChange={(e) => setLabel(e.target.value)}
               placeholder="ไม่บังคับ"
+              className="w-full rounded-xl border border-gray-200 px-4 py-2 text-sm outline-none focus:border-rose-300"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm text-gray-500">
+              ลิงก์ 7k-combo (ถ้ามี)
+            </label>
+            <input
+              value={link}
+              onChange={(e) => setLink(e.target.value)}
+              placeholder="วางลิงก์ทีมจาก 7k-combo"
               className="w-full rounded-xl border border-gray-200 px-4 py-2 text-sm outline-none focus:border-rose-300"
             />
           </div>

@@ -35,7 +35,7 @@ function SlotCell({
         <button
           type="button"
           onClick={() => onPick(refObj)}
-          className="relative grid h-[88px] w-[78px] place-items-center rounded-2xl border-2 border-dashed border-rose-200 bg-white/70 transition hover:border-rose-300"
+          className="relative grid h-[88px] w-[78px] place-items-center rounded-2xl border-2 border-dashed border-rose-300 bg-white transition hover:border-rose-400"
           style={unit ? { borderStyle: "solid", borderColor: lineColor } : {}}
         >
           {unit ? (
@@ -54,43 +54,45 @@ function SlotCell({
               </button>
             </>
           ) : (
-            <span className="text-3xl font-light text-rose-300">+</span>
+            <span className="text-3xl font-light text-rose-400">+</span>
           )}
         </button>
-        <span className="mt-1 max-w-[78px] truncate text-xs text-gray-500">
-          {unit ? unit.name : "name"}
+        <span className="mt-1 max-w-[78px] truncate text-xs text-gray-600">
+          {unit ? unit.name : "ว่าง"}
         </span>
       </div>
 
-      {/* T / B skill-order toggles — each track is independent. */}
-      <div className="flex flex-col gap-1">
-        {(["T", "B"] as SkillTrack[]).map((track) => {
-          const orderNo = track === "T" ? slot.top : slot.bottom;
-          const active = orderNo != null;
-          return (
-            <button
-              key={track}
-              type="button"
-              disabled={!unit}
-              onClick={() => onToggle(refObj, track)}
-              className="relative grid h-6 w-6 place-items-center rounded-full border text-xs font-bold transition disabled:opacity-30"
-              style={
-                active
-                  ? { background: lineColor, color: "#fff", borderColor: lineColor }
-                  : { background: "#fff", color: "#9ca3af", borderColor: "#e5e7eb" }
-              }
-              title={track === "T" ? "สกิลบน" : "สกิลล่าง"}
-            >
-              {track}
-              {active && (
-                <span className="absolute -right-1.5 -top-1.5 grid h-3.5 w-3.5 place-items-center rounded-full bg-yellow-400 text-[9px] font-bold text-white">
-                  {orderNo}
-                </span>
-              )}
-            </button>
-          );
-        })}
-      </div>
+      {/* T / B skill-order toggles — heroes only (pets have no skill order). */}
+      {refObj.row !== "pet" && (
+        <div className="flex flex-col gap-1">
+          {(["T", "B"] as SkillTrack[]).map((track) => {
+            const orderNo = track === "T" ? slot.top : slot.bottom;
+            const active = orderNo != null;
+            return (
+              <button
+                key={track}
+                type="button"
+                disabled={!unit}
+                onClick={() => onToggle(refObj, track)}
+                className="relative grid h-6 w-6 place-items-center rounded-full border text-xs font-bold transition disabled:opacity-30"
+                style={
+                  active
+                    ? { background: lineColor, color: "#fff", borderColor: lineColor }
+                    : { background: "#fff", color: "#6b7280", borderColor: "#d1d5db" }
+                }
+                title={track === "T" ? "สกิลบน" : "สกิลล่าง"}
+              >
+                {track}
+                {active && (
+                  <span className="absolute -right-1.5 -top-1.5 grid h-3.5 w-3.5 place-items-center rounded-full bg-yellow-400 text-[9px] font-bold text-white">
+                    {orderNo}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -110,7 +112,7 @@ export function FormationGrid({
   const front = "#7aa2f7";
 
   return (
-    <div className="rounded-3xl border border-rose-100 bg-rose-50/60 p-5">
+    <div className="rounded-3xl border border-rose-200 bg-rose-50 p-5">
       <div className="flex flex-wrap items-start justify-between gap-6">
         {/* Hero formation */}
         <div className="flex flex-col gap-6">

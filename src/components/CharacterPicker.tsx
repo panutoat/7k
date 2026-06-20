@@ -9,11 +9,14 @@ export function CharacterPicker({
   onPick,
   onOpenFullRoster,
   kind: kindProp,
+  excludeIds,
 }: {
   onPick: (unit: Unit) => void;
   onOpenFullRoster: () => void;
   /** When set, forces the active tab (character/pet) from the parent. */
   kind?: UnitKind;
+  /** Unit ids to hide (already placed / used elsewhere). */
+  excludeIds?: Set<string>;
 }) {
   const { units } = useUnits();
   const [kind, setKind] = useState<UnitKind>("character");
@@ -25,10 +28,12 @@ export function CharacterPicker({
   }, [kindProp]);
 
   const list = useMemo(() => {
-    const source = units.filter((u) => u.kind === kind);
+    const source = units.filter(
+      (u) => u.kind === kind && !excludeIds?.has(u.id)
+    );
     const q = query.trim();
     return q === "" ? source : source.filter((u) => u.name.includes(q));
-  }, [units, kind, query]);
+  }, [units, kind, query, excludeIds]);
 
   return (
     <div className="rounded-3xl border border-gray-100 bg-white p-4 shadow-sm">

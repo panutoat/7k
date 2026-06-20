@@ -5,6 +5,7 @@ import {
   Formation,
   FORMATION_TYPES,
   FormationType,
+  layoutFor,
   MAX_HEROES,
   MAX_SKILL_ORDER,
   RingType,
@@ -161,6 +162,12 @@ export function FormationEditor({
     onChange(reshapeFormation(value, type));
   }
 
+  // Hide units already placed here (and any externally blocked ones).
+  const excludeIds = new Set<string>([
+    ...formationUnitIds(value),
+    ...(blockedUnitIds ?? []),
+  ]);
+
   return (
     <div className="space-y-3">
       {/* Formation preset (รูปแบบ) */}
@@ -169,25 +176,29 @@ export function FormationEditor({
         <div className="flex flex-wrap gap-2">
           {FORMATION_TYPES.map((t) => {
             const active = (value.type ?? "basic") === t.id;
+            const lay = layoutFor(t.id);
             return (
               <button
                 key={t.id}
                 type="button"
                 onClick={() => setType(t.id)}
-                className={`rounded-xl border px-3 py-1.5 text-left transition ${
+                className={`flex items-center gap-2 rounded-xl border px-3 py-1.5 text-left transition ${
                   active
                     ? "border-rose-400 bg-rose-50"
                     : "border-gray-200 hover:bg-gray-50"
                 }`}
               >
-                <span
-                  className={`block text-sm font-semibold ${
-                    active ? "text-rose-600" : "text-gray-700"
-                  }`}
-                >
-                  {t.label}
+                <FormationDiagram back={lay.back} front={lay.front} />
+                <span>
+                  <span
+                    className={`block text-sm font-semibold ${
+                      active ? "text-rose-600" : "text-gray-700"
+                    }`}
+                  >
+                    {t.label}
+                  </span>
+                  <span className="block text-[11px] text-gray-400">{t.hint}</span>
                 </span>
-                <span className="block text-[11px] text-gray-400">{t.hint}</span>
               </button>
             );
           })}
@@ -212,11 +223,13 @@ export function FormationEditor({
         onPick={placeUnit}
         onOpenFullRoster={() => setShowRoster(true)}
         kind={pickerKind}
+        excludeIds={excludeIds}
       />
       {error && <p className="text-sm text-red-500">{error}</p>}
 
       {showRoster && (
         <FullRosterModal
+          excludeIds={excludeIds}
           onPick={(u) => {
             placeUnit(u);
             setShowRoster(false);
@@ -225,5 +238,23 @@ export function FormationEditor({
         />
       )}
     </div>
+  );
+}
+
+/** Tiny back(red)/front(blue) dot diagram for a formation preset. */
+function FormationDiagram({ back, front }: { back: number; front: number }) {
+  const dots = (n: number, color: string) =>
+    Array.from({ length: n }, (_, i) => (
+      <span
+        key={i}
+        className="h-1.5 w-1.5 rounded-full"
+        style={{ background: color }}
+      />
+    ));
+  return (
+    <span className="flex flex-col items-center gap-0.5">
+      <span className="flex gap-0.5">{dots(back, "#ef6b78")}</span>
+      <span className="flex gap-0.5">{dots(front, "#7aa2f7")}</span>
+    </span>
   );
 }

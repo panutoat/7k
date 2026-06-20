@@ -11,9 +11,11 @@ const CHARACTER_CATEGORIES = CATEGORIES.filter((c) => c.id !== "legend");
 export function FullRosterModal({
   onPick,
   onClose,
+  excludeIds,
 }: {
   onPick: (unit: Unit) => void;
   onClose: () => void;
+  excludeIds?: Set<string>;
 }) {
   const { units } = useUnits();
   const [query, setQuery] = useState("");
@@ -24,10 +26,11 @@ export function FullRosterModal({
     return units.filter(
       (u) =>
         u.kind === "character" &&
+        !excludeIds?.has(u.id) &&
         (filter === "all" || u.category === filter) &&
         (q === "" || u.name.includes(q))
     );
-  }, [units, query, filter]);
+  }, [units, query, filter, excludeIds]);
 
   const grouped = useMemo(() => {
     return CHARACTER_CATEGORIES.map((c) => ({

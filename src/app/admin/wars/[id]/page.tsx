@@ -366,12 +366,24 @@ export default function AdminWarPage() {
                     เอาออก
                   </button>
                 </div>
-                <p className="mb-1 text-sm text-gray-500">
-                  เหลือ <b className="text-rose-600">{free.length}</b> คน
+                <p className="mb-2 text-sm text-gray-500">
+                  ยังไม่ใช้ <b className="text-rose-600">{free.length}</b> /{" "}
+                  {members.length} คน
                 </p>
-                <p className="text-xs text-gray-500">
-                  {free.length ? free.map((m) => m.name).join(", ") : "— ไม่มี —"}
-                </p>
+                {free.length === 0 ? (
+                  <p className="text-xs text-gray-400">— ทุกคนใช้แล้ว —</p>
+                ) : (
+                  <div className="flex flex-wrap gap-1">
+                    {free.map((m) => (
+                      <span
+                        key={m.id}
+                        className="rounded-full bg-rose-50 px-2 py-0.5 text-xs text-rose-600"
+                      >
+                        {m.name}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
             );
           })}

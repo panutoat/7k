@@ -79,9 +79,9 @@ export const FORMATION_TYPES: {
   hint: string;
 }[] = [
   { id: "basic", label: "พื้นฐาน", hint: "หลัง 3 / หน้า 2" },
-  { id: "balanced", label: "สมดุล", hint: "สมดุลโจมตี–ป้องกัน" },
-  { id: "attack", label: "โจมตี", hint: "เน้นพลังโจมตี" },
-  { id: "defense", label: "ป้องกัน", hint: "เน้นพลังป้องกัน" },
+  { id: "balanced", label: "สมดุล", hint: "หลัง 2 / หน้า 3" },
+  { id: "attack", label: "โจมตี", hint: "หลัง 4 / หน้า 1" },
+  { id: "defense", label: "ป้องกัน", hint: "หลัง 1 / หน้า 4" },
 ];
 
 export interface Formation {

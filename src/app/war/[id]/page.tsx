@@ -152,11 +152,25 @@ export default function MemberWarPage() {
                 <p className="py-4 text-sm text-gray-400">ยังไม่ได้จัดทีม</p>
               )}
 
-              {targetIdx && (
-                <p className="mt-2 text-xs text-gray-400">
-                  เป้าหมาย: ทีมป้องกัน #{targetIdx}
-                  {target?.label ? ` · ${target.label}` : ""}
-                </p>
+              {atk && (
+                <div className="mt-3 rounded-xl bg-gray-50 px-3 py-2 text-xs">
+                  {targetIdx ? (
+                    <span className="text-gray-600">
+                      <b>ทีมโจมตี #{slot}</b> โจมตี{" "}
+                      <b className="text-rose-600">ทีมป้องกัน #{targetIdx}</b>
+                      {target?.label ? ` · ${target.label}` : ""}
+                    </span>
+                  ) : (
+                    <span className="text-gray-400">ยังไม่เลือกเป้าหมาย</span>
+                  )}
+                  <span
+                    className={`ml-1 font-semibold ${
+                      atk.done ? "text-green-600" : "text-gray-400"
+                    }`}
+                  >
+                    — {atk.done ? "ตีแล้ว" : "ยังไม่ตี"}
+                  </span>
+                </div>
               )}
             </div>
           );

@@ -237,6 +237,7 @@ export default function AdminWarPage() {
                   <th className="px-3 py-3 text-center font-medium text-green-600">ชนะ</th>
                   <th className="px-3 py-3 text-center font-medium text-red-500">แพ้</th>
                   <th className="px-3 py-3 text-center font-medium">ร่วม%</th>
+                  <th className="px-3 py-3 text-center font-medium">เข้าระบบ</th>
                 </tr>
               </thead>
               <tbody>
@@ -292,6 +293,18 @@ export default function AdminWarPage() {
                         {s.loss}
                       </td>
                       <td className="px-3 py-2 text-center text-gray-500">{part}%</td>
+                      <td className="px-3 py-2 text-center">
+                        {m.lastLoginAt ? (
+                          <span
+                            className="text-green-600"
+                            title={new Date(m.lastLoginAt).toLocaleString("th-TH")}
+                          >
+                            ✓
+                          </span>
+                        ) : (
+                          <span className="text-gray-300">—</span>
+                        )}
+                      </td>
                     </tr>
                   );
                 })}

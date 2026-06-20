@@ -25,10 +25,29 @@ export async function PUT(
 ) {
   try {
     requireAdmin();
-    const body = (await req.json()) as { name?: string; active?: boolean };
+    const body = (await req.json()) as {
+      name?: string;
+      active?: boolean;
+      ourScore?: number | null;
+      enemyScore?: number | null;
+      result?: "win" | "lose" | null;
+    };
+    const num = (v: unknown) => {
+      if (v === null) return null;
+      const n = Math.round(Number(v));
+      return Number.isFinite(n) ? n : undefined;
+    };
     const war = await updateWar(params.id, {
       name: typeof body.name === "string" ? body.name.trim() : undefined,
       active: typeof body.active === "boolean" ? body.active : undefined,
+      ourScore: "ourScore" in body ? num(body.ourScore) : undefined,
+      enemyScore: "enemyScore" in body ? num(body.enemyScore) : undefined,
+      result:
+        "result" in body
+          ? body.result === "win" || body.result === "lose"
+            ? body.result
+            : null
+          : undefined,
     });
     if (!war) return NextResponse.json({ error: "not found" }, { status: 404 });
     return NextResponse.json({ war });

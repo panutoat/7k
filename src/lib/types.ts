@@ -189,6 +189,8 @@ export interface Session {
 export interface Member {
   id: string;
   name: string;
+  /** Last time this member logged in (for participation tracking). */
+  lastLoginAt: string | null;
   createdAt: string;
 }
 
@@ -197,6 +199,10 @@ export interface War {
   /** Target guild name. */
   name: string;
   active: boolean;
+  /** Final scores + result, entered by an admin after the war. */
+  ourScore: number | null;
+  enemyScore: number | null;
+  result: "win" | "lose" | null;
   createdAt: string;
 }
 

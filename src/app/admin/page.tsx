@@ -6,6 +6,7 @@ import Link from "next/link";
 import { useAuth } from "@/lib/auth-context";
 import { Member, War } from "@/lib/types";
 import { AppHeader } from "@/components/AppHeader";
+import { WarEditModal } from "@/components/WarEditModal";
 
 export default function AdminHome() {
   const { session, loading, isAdmin } = useAuth();
@@ -15,6 +16,7 @@ export default function AdminHome() {
   const [wars, setWars] = useState<War[]>([]);
   const [memberName, setMemberName] = useState("");
   const [warName, setWarName] = useState("");
+  const [editWar, setEditWar] = useState<War | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -156,6 +158,20 @@ export default function AdminHome() {
                   className="flex-1 truncate font-medium hover:text-rose-600"
                 >
                   {w.name}
+                  {w.result && (
+                    <span
+                      className={`ml-2 text-xs font-bold ${
+                        w.result === "win" ? "text-green-600" : "text-red-500"
+                      }`}
+                    >
+                      {w.result === "win" ? "WIN" : "LOSE"}
+                    </span>
+                  )}
+                  {w.ourScore != null && w.enemyScore != null && (
+                    <span className="ml-1 text-xs text-gray-400">
+                      {w.ourScore} - {w.enemyScore}
+                    </span>
+                  )}
                 </Link>
                 <button
                   onClick={() => toggleWar(w)}
@@ -166,6 +182,12 @@ export default function AdminHome() {
                   }`}
                 >
                   {w.active ? "เปิด" : "ปิด"}
+                </button>
+                <button
+                  onClick={() => setEditWar(w)}
+                  className="text-xs text-gray-400 hover:text-rose-500"
+                >
+                  แก้ไข
                 </button>
                 <button
                   onClick={() => removeWar(w.id)}
@@ -227,6 +249,17 @@ export default function AdminHome() {
           </ul>
         </section>
       </div>
+
+      {editWar && (
+        <WarEditModal
+          war={editWar}
+          onClose={() => setEditWar(null)}
+          onSaved={() => {
+            setEditWar(null);
+            load();
+          }}
+        />
+      )}
     </main>
   );
 }

@@ -5,7 +5,7 @@ import {
   passwordMatches,
   sessionCookie,
 } from "@/lib/auth";
-import { findMemberByName } from "@/lib/db";
+import { findMemberByName, touchMemberLogin } from "@/lib/db";
 import { Session } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -39,6 +39,7 @@ export async function POST(req: Request) {
           { status: 401 }
         );
       }
+      await touchMemberLogin(member.id);
       session = { role: "member", memberId: member.id, name: member.name };
     }
 

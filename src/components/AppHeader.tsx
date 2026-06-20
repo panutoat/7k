@@ -13,6 +13,12 @@ export function AppHeader({ subtitle }: { subtitle?: string }) {
     router.push("/login");
   }
 
+  // Switch role: log out and go to login to sign in as the other role.
+  async function switchRole() {
+    await logout();
+    router.push("/login");
+  }
+
   async function renameSelf() {
     if (!session?.memberId) return;
     const name = window.prompt("เปลี่ยนชื่อโปรไฟล์ (ใช้ชื่อใหม่ login ครั้งต่อไป)", session.name);
@@ -59,6 +65,13 @@ export function AppHeader({ subtitle }: { subtitle?: string }) {
             </button>
           )
         )}
+        <button
+          onClick={switchRole}
+          className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50"
+          title={isAdmin ? "ไป login เป็นสมาชิก" : "ไป login เป็นแอดมิน"}
+        >
+          สลับบทบาท
+        </button>
         <button
           onClick={doLogout}
           className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-medium text-gray-500 hover:bg-gray-50"

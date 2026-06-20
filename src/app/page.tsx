@@ -77,6 +77,15 @@ export default function Home() {
                 ⚔
               </span>
               <h3 className="text-lg font-bold group-hover:text-rose-600">{w.name}</h3>
+              {w.result && (
+                <span
+                  className={`rounded-full px-2 py-0.5 text-xs font-bold text-white ${
+                    w.result === "win" ? "bg-green-500" : "bg-red-500"
+                  }`}
+                >
+                  {w.result === "win" ? "WIN" : "LOSE"}
+                </span>
+              )}
               {!w.active && (
                 <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-400">
                   ปิด
@@ -84,7 +93,11 @@ export default function Home() {
               )}
             </div>
             <p className="text-sm text-gray-400">
-              {isAdmin ? "จัดการทีมป้องกัน + ติดตามการตี" : "กดเพื่อจัดทีมเข้าตี"}
+              {w.ourScore != null && w.enemyScore != null
+                ? `แต้ม ${w.ourScore} - ${w.enemyScore}`
+                : isAdmin
+                ? "จัดการทีมป้องกัน + ติดตามการตี"
+                : "กดเพื่อจัดทีมเข้าตี"}
             </p>
           </Link>
         ))}

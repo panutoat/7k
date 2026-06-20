@@ -56,16 +56,20 @@ CREATE INDEX IF NOT EXISTS units_sort_idx ON units (sort_order, created_at);
 
 -- Guild-war planning -------------------------------------------------------
 CREATE TABLE IF NOT EXISTS members (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name        TEXT NOT NULL UNIQUE,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+  id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name          TEXT NOT NULL UNIQUE,
+  last_login_at TIMESTAMPTZ,
+  created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS wars (
-  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name        TEXT NOT NULL,
-  active      BOOLEAN NOT NULL DEFAULT true,
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+  id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name         TEXT NOT NULL,
+  active       BOOLEAN NOT NULL DEFAULT true,
+  our_score    INT,
+  enemy_score  INT,
+  result       TEXT CHECK (result IN ('win','lose')),
+  created_at   TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 CREATE TABLE IF NOT EXISTS defense_teams (
@@ -106,6 +110,10 @@ CREATE TABLE IF NOT EXISTS defense_library (
 ALTER TABLE defense_teams ADD COLUMN IF NOT EXISTS link TEXT;
 ALTER TABLE attack_teams  ADD COLUMN IF NOT EXISTS link TEXT;
 ALTER TABLE attack_teams  ADD COLUMN IF NOT EXISTS result TEXT;
+ALTER TABLE members ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ;
+ALTER TABLE wars ADD COLUMN IF NOT EXISTS our_score INT;
+ALTER TABLE wars ADD COLUMN IF NOT EXISTS enemy_score INT;
+ALTER TABLE wars ADD COLUMN IF NOT EXISTS result TEXT;
 
 CREATE INDEX IF NOT EXISTS defense_war_idx ON defense_teams (war_id, sort_order);
 CREATE INDEX IF NOT EXISTS attack_war_member_idx ON attack_teams (war_id, member_id);
@@ -320,18 +328,22 @@ export async function getUnitImage(
 interface MemberRow {
   id: string;
   name: string;
+  last_login_at: Date | null;
   created_at: Date;
 }
 const toMember = (r: MemberRow): Member => ({
   id: r.id,
   name: r.name,
+  lastLoginAt: r.last_login_at ? new Date(r.last_login_at).toISOString() : null,
   createdAt: new Date(r.created_at).toISOString(),
 });
+
+const MEMBER_COLS = "id, name, last_login_at, created_at";
 
 export async function listMembers(): Promise<Member[]> {
   await ensureSchema();
   const { rows } = await getPool().query<MemberRow>(
-    "SELECT id, name, created_at FROM members ORDER BY name"
+    `SELECT ${MEMBER_COLS} FROM members ORDER BY name`
   );
   return rows.map(toMember);
 }
@@ -339,7 +351,7 @@ export async function listMembers(): Promise<Member[]> {
 export async function findMemberByName(name: string): Promise<Member | null> {
   await ensureSchema();
   const { rows } = await getPool().query<MemberRow>(
-    "SELECT id, name, created_at FROM members WHERE lower(name) = lower($1)",
+    `SELECT ${MEMBER_COLS} FROM members WHERE lower(name) = lower($1)`,
     [name]
   );
   return rows[0] ? toMember(rows[0]) : null;
@@ -348,11 +360,16 @@ export async function findMemberByName(name: string): Promise<Member | null> {
 export async function createMember(name: string): Promise<Member> {
   await ensureSchema();
   const { rows } = await getPool().query<MemberRow>(
-    `INSERT INTO members (name) VALUES ($1)
-     RETURNING id, name, created_at`,
+    `INSERT INTO members (name) VALUES ($1) RETURNING ${MEMBER_COLS}`,
     [name]
   );
   return toMember(rows[0]);
+}
+
+/** Stamp a member's last login time (called on member login). */
+export async function touchMemberLogin(id: string): Promise<void> {
+  await ensureSchema();
+  await getPool().query("UPDATE members SET last_login_at = now() WHERE id = $1", [id]);
 }
 
 export async function renameMember(
@@ -361,7 +378,7 @@ export async function renameMember(
 ): Promise<Member | null> {
   await ensureSchema();
   const { rows } = await getPool().query<MemberRow>(
-    "UPDATE members SET name = $2 WHERE id = $1 RETURNING id, name, created_at",
+    `UPDATE members SET name = $2 WHERE id = $1 RETURNING ${MEMBER_COLS}`,
     [id, name]
   );
   return rows[0] ? toMember(rows[0]) : null;
@@ -381,19 +398,28 @@ interface WarRow {
   id: string;
   name: string;
   active: boolean;
+  our_score: number | null;
+  enemy_score: number | null;
+  result: "win" | "lose" | null;
   created_at: Date;
 }
 const toWar = (r: WarRow): War => ({
   id: r.id,
   name: r.name,
   active: r.active,
+  ourScore: r.our_score,
+  enemyScore: r.enemy_score,
+  result: r.result,
   createdAt: new Date(r.created_at).toISOString(),
 });
+
+const WAR_COLS =
+  "id, name, active, our_score, enemy_score, result, created_at";
 
 export async function listWars(activeOnly = false): Promise<War[]> {
   await ensureSchema();
   const { rows } = await getPool().query<WarRow>(
-    `SELECT id, name, active, created_at FROM wars
+    `SELECT ${WAR_COLS} FROM wars
      ${activeOnly ? "WHERE active = true" : ""}
      ORDER BY created_at DESC`
   );
@@ -403,7 +429,7 @@ export async function listWars(activeOnly = false): Promise<War[]> {
 export async function getWar(id: string): Promise<War | null> {
   await ensureSchema();
   const { rows } = await getPool().query<WarRow>(
-    "SELECT id, name, active, created_at FROM wars WHERE id = $1",
+    `SELECT ${WAR_COLS} FROM wars WHERE id = $1`,
     [id]
   );
   return rows[0] ? toWar(rows[0]) : null;
@@ -412,7 +438,7 @@ export async function getWar(id: string): Promise<War | null> {
 export async function createWar(name: string): Promise<War> {
   await ensureSchema();
   const { rows } = await getPool().query<WarRow>(
-    `INSERT INTO wars (name) VALUES ($1) RETURNING id, name, active, created_at`,
+    `INSERT INTO wars (name) VALUES ($1) RETURNING ${WAR_COLS}`,
     [name]
   );
   return toWar(rows[0]);
@@ -420,16 +446,35 @@ export async function createWar(name: string): Promise<War> {
 
 export async function updateWar(
   id: string,
-  patch: { name?: string; active?: boolean }
+  patch: {
+    name?: string;
+    active?: boolean;
+    ourScore?: number | null;
+    enemyScore?: number | null;
+    result?: "win" | "lose" | null;
+  }
 ): Promise<War | null> {
   await ensureSchema();
   const { rows } = await getPool().query<WarRow>(
     `UPDATE wars SET
        name = COALESCE($2, name),
-       active = COALESCE($3, active)
+       active = COALESCE($3, active),
+       our_score = CASE WHEN $4::boolean THEN $5 ELSE our_score END,
+       enemy_score = CASE WHEN $6::boolean THEN $7 ELSE enemy_score END,
+       result = CASE WHEN $8::boolean THEN $9 ELSE result END
      WHERE id = $1
-     RETURNING id, name, active, created_at`,
-    [id, patch.name ?? null, patch.active ?? null]
+     RETURNING ${WAR_COLS}`,
+    [
+      id,
+      patch.name ?? null,
+      patch.active ?? null,
+      patch.ourScore !== undefined,
+      patch.ourScore ?? null,
+      patch.enemyScore !== undefined,
+      patch.enemyScore ?? null,
+      patch.result !== undefined,
+      patch.result ?? null,
+    ]
   );
   return rows[0] ? toWar(rows[0]) : null;
 }

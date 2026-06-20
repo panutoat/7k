@@ -29,6 +29,12 @@ export function LibraryPickerModal({
     });
   }
 
+  function toggleAll() {
+    setSelected((prev) =>
+      prev.size === library.length ? new Set() : new Set(library.map((e) => e.id))
+    );
+  }
+
   const load = useCallback(async () => {
     setBusy(true);
     const data = await fetch("/api/library").then((r) => r.json());
@@ -80,9 +86,17 @@ export function LibraryPickerModal({
             </p>
           ) : (
             <>
-              <p className="mb-3 text-sm text-gray-400">
-                คลิกการ์ดเพื่อเลือก (เลือกได้หลายทีม) แล้วกด “เพิ่มที่เลือก”
-              </p>
+              <div className="mb-3 flex items-center justify-between">
+                <p className="text-sm text-gray-400">
+                  คลิกการ์ดเพื่อเลือก (เลือกได้หลายทีม) แล้วกด “เพิ่มที่เลือก”
+                </p>
+                <button
+                  onClick={toggleAll}
+                  className="shrink-0 rounded-lg border border-gray-200 px-3 py-1 text-xs font-medium text-gray-600 hover:bg-gray-50"
+                >
+                  {selected.size === library.length ? "ยกเลิกทั้งหมด" : "เลือกทั้งหมด"}
+                </button>
+              </div>
               <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                 {library.map((e) => {
                   const on = selected.has(e.id);

@@ -5,6 +5,7 @@ import {
   AttackTeam,
   DefenseTeam,
   Formation,
+  RecommendedTeam,
   emptyFormation,
 } from "@/lib/types";
 import { useUnits } from "@/lib/units-context";
@@ -51,6 +52,7 @@ export function AttackTeamModal({
   const [history, setHistory] = useState<HistoryItem[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [defenseQuery, setDefenseQuery] = useState("");
+  const [recommended, setRecommended] = useState<RecommendedTeam[]>([]);
 
   useEffect(() => {
     fetch(`/api/wars/${warId}/my-history`)
@@ -58,6 +60,23 @@ export function AttackTeamModal({
       .then((d) => setHistory((d.history as HistoryItem[]) ?? []))
       .catch(() => setHistory([]));
   }, [warId]);
+
+  // Load admin-recommended teams for the chosen target defense.
+  useEffect(() => {
+    if (!targetId) {
+      setRecommended([]);
+      return;
+    }
+    fetch(`/api/defenses/${targetId}/recommended`)
+      .then((r) => r.json())
+      .then((d) => setRecommended((d.recommended as RecommendedTeam[]) ?? []))
+      .catch(() => setRecommended([]));
+  }, [targetId]);
+
+  function applyFormation(f: Formation, l: string | null) {
+    setFormation(f);
+    if (l) setLink(l);
+  }
 
   async function save() {
     setSaving(true);
@@ -165,6 +184,29 @@ export function AttackTeamModal({
               </>
             )}
           </div>
+
+          {recommended.length > 0 && (
+            <div>
+              <p className="mb-2 text-sm font-semibold text-amber-600">
+                ⭐ ทีมแนะนำสำหรับตีทีมนี้
+              </p>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                {recommended.map((t) => (
+                  <button
+                    key={t.id}
+                    type="button"
+                    onClick={() => applyFormation(t.formation, t.link)}
+                    className="rounded-xl border-2 border-amber-300 bg-amber-50/60 p-2 text-left transition hover:border-amber-400"
+                  >
+                    <p className="mb-1 truncate text-[11px] font-semibold text-amber-700">
+                      ⭐ {t.label || "ทีมแนะนำ"}
+                    </p>
+                    <FormationPreview formation={t.formation} size={24} showType={false} />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
 
           {history.length > 0 && (
             <div>

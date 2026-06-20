@@ -18,6 +18,7 @@ import { FormationPreview } from "@/components/FormationPreview";
 import { DefenseModal } from "@/components/DefenseModal";
 import { AdminAttackModal } from "@/components/AdminAttackModal";
 import { LibraryPickerModal } from "@/components/LibraryPickerModal";
+import { RecommendModal } from "@/components/RecommendModal";
 
 export default function AdminWarPage() {
   const { id } = useParams<{ id: string }>();
@@ -32,6 +33,9 @@ export default function AdminWarPage() {
   const [showDefense, setShowDefense] = useState(false);
   const [showLibrary, setShowLibrary] = useState(false);
   const [editDefense, setEditDefense] = useState<DefenseTeam | null>(null);
+  const [recDefense, setRecDefense] = useState<{ d: DefenseTeam; i: number } | null>(
+    null
+  );
   const [edit, setEdit] = useState<{ member: Member; slot: number } | null>(null);
   const [sort, setSort] = useState<"name" | "done-desc" | "done-asc">("done-desc");
   const [heroQuery, setHeroQuery] = useState("");
@@ -176,6 +180,13 @@ export default function AdminWarPage() {
                     {d.label ? ` · ${d.label}` : ""}
                   </span>
                   <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setRecDefense({ d, i })}
+                      className="text-xs text-amber-500 hover:text-amber-600"
+                      title="ทีมแนะนำสำหรับตีบ้านนี้"
+                    >
+                      ⭐ แนะนำ
+                    </button>
                     <button
                       onClick={() => saveToLibrary(d)}
                       className="text-xs text-gray-400 hover:text-blue-500"
@@ -403,6 +414,14 @@ export default function AdminWarPage() {
           })}
         </div>
       </section>
+
+      {recDefense && (
+        <RecommendModal
+          defense={recDefense.d}
+          index={recDefense.i + 1}
+          onClose={() => setRecDefense(null)}
+        />
+      )}
 
       {showLibrary && (
         <LibraryPickerModal

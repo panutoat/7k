@@ -208,6 +208,16 @@ export interface War {
   createdAt: string;
 }
 
+/** An admin-recommended attack team for beating a specific defense. */
+export interface RecommendedTeam {
+  id: string;
+  defenseId: string;
+  label: string;
+  formation: Formation;
+  link: string | null;
+  createdAt: string;
+}
+
 /** A reusable defense template stored in the central library. */
 export interface LibraryDefense {
   id: string;

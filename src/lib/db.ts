@@ -6,6 +6,7 @@ import {
   formationUnitIds,
   LibraryDefense,
   Member,
+  RecommendedTeam,
   Unit,
   UnitKind,
   War,
@@ -104,6 +105,17 @@ CREATE TABLE IF NOT EXISTS attack_teams (
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (war_id, member_id, slot)
 );
+
+-- Admin-recommended attack teams for beating a specific defense.
+CREATE TABLE IF NOT EXISTS recommended_teams (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  defense_id  UUID NOT NULL REFERENCES defense_teams(id) ON DELETE CASCADE,
+  label       TEXT NOT NULL DEFAULT '',
+  formation   JSONB NOT NULL,
+  link        TEXT,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+CREATE INDEX IF NOT EXISTS recommended_defense_idx ON recommended_teams (defense_id);
 
 -- Reusable defense templates shared across wars (central library).
 CREATE TABLE IF NOT EXISTS defense_library (
@@ -580,6 +592,63 @@ export async function updateDefense(
 export async function deleteDefense(id: string): Promise<boolean> {
   await ensureSchema();
   const { rowCount } = await getPool().query("DELETE FROM defense_teams WHERE id = $1", [id]);
+  return (rowCount ?? 0) > 0;
+}
+
+// ---------------------------------------------------------------------------
+// Recommended attack teams (per defense)
+// ---------------------------------------------------------------------------
+
+interface RecRow {
+  id: string;
+  defense_id: string;
+  label: string;
+  formation: Formation;
+  link: string | null;
+  created_at: Date;
+}
+const toRec = (r: RecRow): RecommendedTeam => ({
+  id: r.id,
+  defenseId: r.defense_id,
+  label: r.label,
+  formation: r.formation,
+  link: r.link,
+  createdAt: new Date(r.created_at).toISOString(),
+});
+const REC_COLS = "id, defense_id, label, formation, link, created_at";
+
+export async function listRecommended(
+  defenseId: string
+): Promise<RecommendedTeam[]> {
+  await ensureSchema();
+  const { rows } = await getPool().query<RecRow>(
+    `SELECT ${REC_COLS} FROM recommended_teams WHERE defense_id = $1 ORDER BY created_at`,
+    [defenseId]
+  );
+  return rows.map(toRec);
+}
+
+export async function createRecommended(input: {
+  defenseId: string;
+  label: string;
+  formation: Formation;
+  link: string | null;
+}): Promise<RecommendedTeam> {
+  await ensureSchema();
+  const { rows } = await getPool().query<RecRow>(
+    `INSERT INTO recommended_teams (defense_id, label, formation, link)
+     VALUES ($1, $2, $3, $4) RETURNING ${REC_COLS}`,
+    [input.defenseId, input.label, JSON.stringify(input.formation), input.link]
+  );
+  return toRec(rows[0]);
+}
+
+export async function deleteRecommended(id: string): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await getPool().query(
+    "DELETE FROM recommended_teams WHERE id = $1",
+    [id]
+  );
   return (rowCount ?? 0) > 0;
 }
 

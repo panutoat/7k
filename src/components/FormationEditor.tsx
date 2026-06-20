@@ -134,6 +134,18 @@ export function FormationEditor({
     onChange(next);
   }
 
+  // Drag & drop: swap two hero slots (keeps each hero's skill reservations).
+  function swapSlots(a: SlotRef, b: SlotRef) {
+    if (a.row === "pet" || b.row === "pet") return;
+    if (a.row === b.row && a.index === b.index) return;
+    const next = clone(value);
+    const sa = { ...getSlot(next, a) };
+    const sb = { ...getSlot(next, b) };
+    setSlot(next, a, sb);
+    setSlot(next, b, sa);
+    onChange(next);
+  }
+
   function setType(type: FormationType) {
     onChange(reshapeFormation(value, type));
   }
@@ -176,11 +188,13 @@ export function FormationEditor({
           เลือกตัวละครจากด้านล่างเพื่อใส่ในช่องที่เลือก
         </p>
       )}
+      <p className="text-xs text-gray-400">เคล็ดลับ: ลากตัวละครเพื่อสลับตำแหน่งได้</p>
       <FormationGrid
         formation={value}
         onPick={focusSlot}
         onToggle={toggleTrack}
         onClear={clearSlot}
+        onSwap={swapSlots}
       />
       <CharacterPicker
         onPick={placeUnit}

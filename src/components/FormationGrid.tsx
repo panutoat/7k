@@ -19,6 +19,7 @@ function SlotCell({
   onPick,
   onToggle,
   onClear,
+  onSwap,
 }: {
   slot: Slot;
   refObj: SlotRef;
@@ -26,15 +27,36 @@ function SlotCell({
   onPick: (ref: SlotRef) => void;
   onToggle: (ref: SlotRef, track: SkillTrack) => void;
   onClear: (ref: SlotRef) => void;
+  onSwap: (a: SlotRef, b: SlotRef) => void;
 }) {
   const { getUnit } = useUnits();
   const unit = getUnit(slot.unitId);
+  const canDrag = !!unit && refObj.row !== "pet";
   return (
     <div className="flex items-center gap-1">
       <div className="flex flex-col items-center">
         <button
           type="button"
           onClick={() => onPick(refObj)}
+          draggable={canDrag}
+          onDragStart={(e) =>
+            e.dataTransfer.setData("text/plain", JSON.stringify(refObj))
+          }
+          onDragOver={(e) => {
+            if (refObj.row !== "pet") e.preventDefault();
+          }}
+          onDrop={(e) => {
+            e.preventDefault();
+            if (refObj.row === "pet") return;
+            try {
+              const src = JSON.parse(
+                e.dataTransfer.getData("text/plain")
+              ) as SlotRef;
+              if (src) onSwap(src, refObj);
+            } catch {
+              /* ignore */
+            }
+          }}
           className="relative grid h-[88px] w-[78px] place-items-center rounded-2xl border-2 border-dashed border-rose-300 bg-white transition hover:border-rose-400"
           style={unit ? { borderStyle: "solid", borderColor: lineColor } : {}}
         >
@@ -102,11 +124,13 @@ export function FormationGrid({
   onPick,
   onToggle,
   onClear,
+  onSwap,
 }: {
   formation: Formation;
   onPick: (ref: SlotRef) => void;
   onToggle: (ref: SlotRef, track: SkillTrack) => void;
   onClear: (ref: SlotRef) => void;
+  onSwap: (a: SlotRef, b: SlotRef) => void;
 }) {
   const back = "#ef6b78";
   const front = "#7aa2f7";
@@ -128,6 +152,7 @@ export function FormationGrid({
                   onPick={onPick}
                   onToggle={onToggle}
                   onClear={onClear}
+                  onSwap={onSwap}
                 />
               ))}
             </div>
@@ -151,6 +176,7 @@ export function FormationGrid({
                   onPick={onPick}
                   onToggle={onToggle}
                   onClear={onClear}
+                  onSwap={onSwap}
                 />
               ))}
             </div>
@@ -173,6 +199,7 @@ export function FormationGrid({
             onPick={onPick}
             onToggle={onToggle}
             onClear={onClear}
+            onSwap={onSwap}
           />
         </div>
       </div>

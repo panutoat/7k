@@ -184,6 +184,15 @@ export interface War {
   createdAt: string;
 }
 
+/** A reusable defense template stored in the central library. */
+export interface LibraryDefense {
+  id: string;
+  label: string;
+  formation: Formation;
+  link: string | null;
+  createdAt: string;
+}
+
 /** An enemy formation the guild needs to break. */
 export interface DefenseTeam {
   id: string;

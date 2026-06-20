@@ -17,6 +17,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { FormationPreview } from "@/components/FormationPreview";
 import { DefenseModal } from "@/components/DefenseModal";
 import { AdminAttackModal } from "@/components/AdminAttackModal";
+import { LibraryPickerModal } from "@/components/LibraryPickerModal";
 
 export default function AdminWarPage() {
   const { id } = useParams<{ id: string }>();
@@ -29,6 +30,7 @@ export default function AdminWarPage() {
   const [members, setMembers] = useState<Member[]>([]);
   const [busy, setBusy] = useState(true);
   const [showDefense, setShowDefense] = useState(false);
+  const [showLibrary, setShowLibrary] = useState(false);
   const [editDefense, setEditDefense] = useState<DefenseTeam | null>(null);
   const [edit, setEdit] = useState<{ member: Member; slot: number } | null>(null);
   const [sort, setSort] = useState<"name" | "done-desc" | "done-asc">("done-desc");
@@ -110,6 +112,15 @@ export default function AdminWarPage() {
     load();
   }
 
+  async function saveToLibrary(d: DefenseTeam) {
+    const res = await fetch("/api/library", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ label: d.label, formation: d.formation, link: d.link }),
+    });
+    if (res.ok) alert("บันทึกเข้าคลังแล้ว");
+  }
+
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
       <AppHeader subtitle={war ? `จัดการกิล: ${war.name}` : undefined} />
@@ -123,12 +134,20 @@ export default function AdminWarPage() {
       <section className="mt-6">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-lg font-bold">ทีมป้องกัน ({defenses.length})</h2>
-          <button
-            onClick={() => setShowDefense(true)}
-            className="rounded-xl bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-600"
-          >
-            + เพิ่มทีมป้องกัน
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowLibrary(true)}
+              className="rounded-xl border border-blue-200 px-4 py-2 text-sm font-semibold text-blue-600 hover:bg-blue-50"
+            >
+              เลือกจากคลัง
+            </button>
+            <button
+              onClick={() => setShowDefense(true)}
+              className="rounded-xl bg-blue-500 px-4 py-2 text-sm font-semibold text-white hover:bg-blue-600"
+            >
+              + เพิ่มทีมป้องกัน
+            </button>
+          </div>
         </div>
         {defenses.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-gray-200 bg-white p-8 text-center text-sm text-gray-400">
@@ -147,6 +166,13 @@ export default function AdminWarPage() {
                     {d.label ? ` · ${d.label}` : ""}
                   </span>
                   <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => saveToLibrary(d)}
+                      className="text-xs text-gray-400 hover:text-blue-500"
+                      title="บันทึกเข้าคลังกลาง"
+                    >
+                      เก็บคลัง
+                    </button>
                     <button
                       onClick={() => setEditDefense(d)}
                       className="text-xs text-gray-400 hover:text-rose-500"
@@ -338,6 +364,17 @@ export default function AdminWarPage() {
           })}
         </div>
       </section>
+
+      {showLibrary && (
+        <LibraryPickerModal
+          warId={id}
+          onClose={() => setShowLibrary(false)}
+          onAdded={() => {
+            setShowLibrary(false);
+            load();
+          }}
+        />
+      )}
 
       {(showDefense || editDefense) && (
         <DefenseModal

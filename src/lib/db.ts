@@ -4,6 +4,7 @@ import {
   DefenseTeam,
   Formation,
   formationUnitIds,
+  LibraryDefense,
   Member,
   Unit,
   UnitKind,
@@ -90,6 +91,15 @@ CREATE TABLE IF NOT EXISTS attack_teams (
   created_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
   updated_at      TIMESTAMPTZ NOT NULL DEFAULT now(),
   UNIQUE (war_id, member_id, slot)
+);
+
+-- Reusable defense templates shared across wars (central library).
+CREATE TABLE IF NOT EXISTS defense_library (
+  id          UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  label       TEXT NOT NULL DEFAULT '',
+  formation   JSONB NOT NULL,
+  link        TEXT,
+  created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
 -- Migrations for DBs created before these columns existed.
@@ -502,6 +512,57 @@ export async function updateDefense(
 export async function deleteDefense(id: string): Promise<boolean> {
   await ensureSchema();
   const { rowCount } = await getPool().query("DELETE FROM defense_teams WHERE id = $1", [id]);
+  return (rowCount ?? 0) > 0;
+}
+
+// ---------------------------------------------------------------------------
+// Central defense library
+// ---------------------------------------------------------------------------
+
+interface LibraryRow {
+  id: string;
+  label: string;
+  formation: Formation;
+  link: string | null;
+  created_at: Date;
+}
+const toLibrary = (r: LibraryRow): LibraryDefense => ({
+  id: r.id,
+  label: r.label,
+  formation: r.formation,
+  link: r.link,
+  createdAt: new Date(r.created_at).toISOString(),
+});
+
+export async function listLibrary(): Promise<LibraryDefense[]> {
+  await ensureSchema();
+  const { rows } = await getPool().query<LibraryRow>(
+    "SELECT id, label, formation, link, created_at FROM defense_library ORDER BY created_at DESC"
+  );
+  return rows.map(toLibrary);
+}
+
+export async function createLibrary(input: {
+  label: string;
+  formation: Formation;
+  link: string | null;
+}): Promise<LibraryDefense> {
+  await ensureSchema();
+  const { rows } = await getPool().query<LibraryRow>(
+    `INSERT INTO defense_library (label, formation, link)
+     VALUES ($1, $2, $3)
+     RETURNING id, label, formation, link, created_at`,
+    [input.label, JSON.stringify(input.formation), input.link]
+  );
+  return toLibrary(rows[0]);
+}
+
+export async function deleteLibrary(id: string): Promise<boolean> {
+  await ensureSchema();
+  const { rowCount } = await getPool().query(
+    "DELETE FROM defense_library WHERE id = $1",
+    [id]
+  );
   return (rowCount ?? 0) > 0;
 }
 

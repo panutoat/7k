@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { CATEGORIES, Unit } from "@/lib/types";
 import { useUnits } from "@/lib/units-context";
 import { useAuth } from "@/lib/auth-context";
-import { Portrait, Stars } from "@/components/Portrait";
+import { Portrait } from "@/components/Portrait";
 import { UnitEditorModal } from "@/components/UnitEditorModal";
 
 export default function CharactersAdminPage() {
@@ -124,7 +124,6 @@ export default function CharactersAdminPage() {
                       >
                         <div className="shrink-0">
                           <Portrait unit={u} size={56} />
-                          <Stars count={u.stars} />
                         </div>
                         <div className="min-w-0 flex-1">
                           <p className="truncate font-semibold">{u.name}</p>

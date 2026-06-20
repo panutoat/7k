@@ -1,7 +1,7 @@
 "use client";
 
 import { Unit } from "@/lib/types";
-import { Portrait, Stars } from "./Portrait";
+import { Portrait } from "./Portrait";
 
 export function UnitTile({
   unit,
@@ -21,7 +21,6 @@ export function UnitTile({
     >
       <div>
         <Portrait unit={unit} size={size} />
-        <Stars count={unit.stars} />
       </div>
       <span className="max-w-[80px] truncate text-xs text-gray-600">
         {unit.name}

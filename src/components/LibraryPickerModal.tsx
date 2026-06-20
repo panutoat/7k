@@ -18,6 +18,16 @@ export function LibraryPickerModal({
   const [library, setLibrary] = useState<LibraryDefense[]>([]);
   const [busy, setBusy] = useState(true);
   const [editing, setEditing] = useState<LibraryDefense | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [adding, setAdding] = useState(false);
+
+  function toggle(id: string) {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  }
 
   const load = useCallback(async () => {
     setBusy(true);
@@ -30,12 +40,18 @@ export function LibraryPickerModal({
     load();
   }, [load]);
 
-  async function use(e: LibraryDefense) {
-    await fetch(`/api/wars/${warId}/defenses`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ label: e.label, formation: e.formation, link: e.link }),
-    });
+  async function addSelected() {
+    const chosen = library.filter((e) => selected.has(e.id));
+    if (chosen.length === 0) return;
+    setAdding(true);
+    for (const e of chosen) {
+      await fetch(`/api/wars/${warId}/defenses`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ label: e.label, formation: e.formation, link: e.link }),
+      });
+    }
+    setAdding(false);
     onAdded();
   }
 
@@ -63,51 +79,83 @@ export function LibraryPickerModal({
               คลังว่าง — กด “บันทึกเข้าคลัง” ที่ทีมป้องกันเพื่อเก็บไว้ใช้ซ้ำ
             </p>
           ) : (
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-              {library.map((e) => (
-                <div
-                  key={e.id}
-                  className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm"
-                >
-                  <div className="mb-2 flex items-center justify-between gap-2">
-                    <span className="truncate text-sm font-semibold">
-                      {e.label || "ไม่มีชื่อ"}
-                    </span>
-                    <span className="flex shrink-0 items-center gap-2">
-                      <button
-                        onClick={() => setEditing(e)}
-                        className="text-xs text-gray-400 hover:text-rose-500"
-                      >
-                        แก้ไข
-                      </button>
-                      <button
-                        onClick={() => remove(e.id)}
-                        className="text-xs text-gray-300 hover:text-red-500"
-                      >
-                        ลบ
-                      </button>
-                    </span>
-                  </div>
-                  <FormationPreview formation={e.formation} size={34} />
-                  <button
-                    onClick={() => use(e)}
-                    className="mt-3 w-full rounded-lg bg-blue-500 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-600"
-                  >
-                    ใช้ทีมนี้
-                  </button>
-                </div>
-              ))}
-            </div>
+            <>
+              <p className="mb-3 text-sm text-gray-400">
+                คลิกการ์ดเพื่อเลือก (เลือกได้หลายทีม) แล้วกด “เพิ่มที่เลือก”
+              </p>
+              <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                {library.map((e) => {
+                  const on = selected.has(e.id);
+                  return (
+                    <div
+                      key={e.id}
+                      onClick={() => toggle(e.id)}
+                      className={`cursor-pointer rounded-2xl border bg-white p-4 shadow-sm transition ${
+                        on
+                          ? "border-blue-400 ring-2 ring-blue-200"
+                          : "border-gray-100 hover:border-blue-200"
+                      }`}
+                    >
+                      <div className="mb-2 flex items-center justify-between gap-2">
+                        <span className="flex items-center gap-2 truncate text-sm font-semibold">
+                          <span
+                            className={`grid h-4 w-4 shrink-0 place-items-center rounded border text-[10px] ${
+                              on
+                                ? "border-blue-500 bg-blue-500 text-white"
+                                : "border-gray-300 text-transparent"
+                            }`}
+                          >
+                            ✓
+                          </span>
+                          {e.label || "ไม่มีชื่อ"}
+                        </span>
+                        <span className="flex shrink-0 items-center gap-2">
+                          <button
+                            onClick={(ev) => {
+                              ev.stopPropagation();
+                              setEditing(e);
+                            }}
+                            className="text-xs text-gray-400 hover:text-rose-500"
+                          >
+                            แก้ไข
+                          </button>
+                          <button
+                            onClick={(ev) => {
+                              ev.stopPropagation();
+                              remove(e.id);
+                            }}
+                            className="text-xs text-gray-300 hover:text-red-500"
+                          >
+                            ลบ
+                          </button>
+                        </span>
+                      </div>
+                      <FormationPreview formation={e.formation} size={34} />
+                    </div>
+                  );
+                })}
+              </div>
+            </>
           )}
         </div>
 
-        <div className="flex justify-end border-t px-6 py-3">
-          <button
-            onClick={onClose}
-            className="rounded-xl border border-gray-200 px-5 py-2 text-sm font-medium hover:bg-gray-50"
-          >
-            ปิด
-          </button>
+        <div className="flex items-center justify-between gap-3 border-t px-6 py-3">
+          <span className="text-sm text-gray-500">เลือกแล้ว {selected.size} ทีม</span>
+          <div className="flex gap-3">
+            <button
+              onClick={onClose}
+              className="rounded-xl border border-gray-200 px-5 py-2 text-sm font-medium hover:bg-gray-50"
+            >
+              ปิด
+            </button>
+            <button
+              onClick={addSelected}
+              disabled={selected.size === 0 || adding}
+              className="rounded-xl bg-blue-500 px-5 py-2 text-sm font-semibold text-white hover:bg-blue-600 disabled:opacity-50"
+            >
+              {adding ? "กำลังเพิ่ม..." : `เพิ่มที่เลือก (${selected.size})`}
+            </button>
+          </div>
         </div>
       </div>
 

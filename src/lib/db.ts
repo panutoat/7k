@@ -62,6 +62,14 @@ CREATE TABLE IF NOT EXISTS members (
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
+-- Per-day login counts (a day = 00:00–23:59 Asia/Bangkok).
+CREATE TABLE IF NOT EXISTS member_logins (
+  member_id UUID NOT NULL REFERENCES members(id) ON DELETE CASCADE,
+  day       DATE NOT NULL,
+  count     INT  NOT NULL DEFAULT 0,
+  PRIMARY KEY (member_id, day)
+);
+
 CREATE TABLE IF NOT EXISTS wars (
   id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name         TEXT NOT NULL,
@@ -329,12 +337,14 @@ interface MemberRow {
   id: string;
   name: string;
   last_login_at: Date | null;
+  login_today?: number | string;
   created_at: Date;
 }
 const toMember = (r: MemberRow): Member => ({
   id: r.id,
   name: r.name,
   lastLoginAt: r.last_login_at ? new Date(r.last_login_at).toISOString() : null,
+  loginToday: Number(r.login_today ?? 0),
   createdAt: new Date(r.created_at).toISOString(),
 });
 
@@ -343,7 +353,13 @@ const MEMBER_COLS = "id, name, last_login_at, created_at";
 export async function listMembers(): Promise<Member[]> {
   await ensureSchema();
   const { rows } = await getPool().query<MemberRow>(
-    `SELECT ${MEMBER_COLS} FROM members ORDER BY name`
+    `SELECT m.id, m.name, m.last_login_at, m.created_at,
+       COALESCE((
+         SELECT count FROM member_logins ml
+         WHERE ml.member_id = m.id
+           AND ml.day = (now() AT TIME ZONE 'Asia/Bangkok')::date
+       ), 0) AS login_today
+     FROM members m ORDER BY m.name`
   );
   return rows.map(toMember);
 }
@@ -366,10 +382,17 @@ export async function createMember(name: string): Promise<Member> {
   return toMember(rows[0]);
 }
 
-/** Stamp a member's last login time (called on member login). */
+/** Stamp last login + increment today's login count (Asia/Bangkok day). */
 export async function touchMemberLogin(id: string): Promise<void> {
   await ensureSchema();
   await getPool().query("UPDATE members SET last_login_at = now() WHERE id = $1", [id]);
+  await getPool().query(
+    `INSERT INTO member_logins (member_id, day, count)
+     VALUES ($1, (now() AT TIME ZONE 'Asia/Bangkok')::date, 1)
+     ON CONFLICT (member_id, day)
+     DO UPDATE SET count = member_logins.count + 1`,
+    [id]
+  );
 }
 
 export async function renameMember(

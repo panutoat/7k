@@ -191,6 +191,8 @@ export interface Member {
   name: string;
   /** Last time this member logged in (for participation tracking). */
   lastLoginAt: string | null;
+  /** Number of logins today (00:00–23:59 Asia/Bangkok). */
+  loginToday: number;
   createdAt: string;
 }
 

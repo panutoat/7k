@@ -10,7 +10,9 @@ import {
   DefenseTeam,
   Member,
   War,
+  formationUnitIds,
 } from "@/lib/types";
+import { useUnits } from "@/lib/units-context";
 import { AppHeader } from "@/components/AppHeader";
 import { FormationPreview } from "@/components/FormationPreview";
 import { DefenseModal } from "@/components/DefenseModal";
@@ -30,6 +32,9 @@ export default function AdminWarPage() {
   const [editDefense, setEditDefense] = useState<DefenseTeam | null>(null);
   const [edit, setEdit] = useState<{ member: Member; slot: number } | null>(null);
   const [sort, setSort] = useState<"name" | "done-desc" | "done-asc">("done-desc");
+  const [heroQuery, setHeroQuery] = useState("");
+  const [pickedHeroes, setPickedHeroes] = useState<string[]>([]);
+  const { units, getUnit } = useUnits();
 
   useEffect(() => {
     if (loading) return;
@@ -76,6 +81,28 @@ export default function AdminWarPage() {
     const diff = statsOf(b.id).done - statsOf(a.id).done;
     return sort === "done-asc" ? -diff : diff;
   });
+
+  // Heroes each member has already committed this war (for "remaining" tool).
+  const usedByMember = new Map<string, Set<string>>();
+  for (const a of attacks) {
+    if (!a.formation) continue;
+    const set = usedByMember.get(a.memberId) ?? new Set<string>();
+    for (const uid of formationUnitIds(a.formation)) set.add(uid);
+    usedByMember.set(a.memberId, set);
+  }
+  const membersWithHeroFree = (heroId: string) =>
+    members.filter((m) => !usedByMember.get(m.id)?.has(heroId));
+
+  const heroResults = heroQuery.trim()
+    ? units
+        .filter(
+          (u) =>
+            u.kind === "character" &&
+            u.name.includes(heroQuery.trim()) &&
+            !pickedHeroes.includes(u.id)
+        )
+        .slice(0, 8)
+    : [];
 
   async function deleteDefense(defId: string) {
     if (!confirm("ลบทีมป้องกันนี้?")) return;
@@ -246,6 +273,70 @@ export default function AdminWarPage() {
             </table>
           </div>
         )}
+      </section>
+
+      {/* Remaining-hero tool */}
+      <section className="mt-8">
+        <h2 className="mb-2 text-lg font-bold">ฮีโร่คงเหลือ (ใครยังไม่ใช้)</h2>
+        <p className="mb-3 text-sm text-gray-400">
+          เลือกฮีโร่เพื่อดูว่าสมาชิกคนไหน “ยังไม่ได้ใช้” ตัวนี้ในวอร์นี้
+        </p>
+        <div className="relative max-w-sm">
+          <input
+            value={heroQuery}
+            onChange={(e) => setHeroQuery(e.target.value)}
+            placeholder="ค้นหาฮีโร่เพื่อเพิ่ม..."
+            className="w-full rounded-xl border border-gray-200 px-4 py-2 text-sm outline-none focus:border-rose-300"
+          />
+          {heroResults.length > 0 && (
+            <div className="absolute z-10 mt-1 w-full overflow-hidden rounded-xl border border-gray-200 bg-white shadow-lg">
+              {heroResults.map((u) => (
+                <button
+                  key={u.id}
+                  onClick={() => {
+                    setPickedHeroes((p) => [...p, u.id]);
+                    setHeroQuery("");
+                  }}
+                  className="block w-full px-4 py-2 text-left text-sm hover:bg-rose-50"
+                >
+                  {u.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {pickedHeroes.map((hid) => {
+            const free = membersWithHeroFree(hid);
+            return (
+              <div
+                key={hid}
+                className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm"
+              >
+                <div className="mb-2 flex items-center justify-between">
+                  <span className="font-semibold">
+                    {getUnit(hid)?.name ?? hid}
+                  </span>
+                  <button
+                    onClick={() =>
+                      setPickedHeroes((p) => p.filter((x) => x !== hid))
+                    }
+                    className="text-xs text-gray-300 hover:text-red-500"
+                  >
+                    เอาออก
+                  </button>
+                </div>
+                <p className="mb-1 text-sm text-gray-500">
+                  เหลือ <b className="text-rose-600">{free.length}</b> คน
+                </p>
+                <p className="text-xs text-gray-500">
+                  {free.length ? free.map((m) => m.name).join(", ") : "— ไม่มี —"}
+                </p>
+              </div>
+            );
+          })}
+        </div>
       </section>
 
       {(showDefense || editDefense) && (

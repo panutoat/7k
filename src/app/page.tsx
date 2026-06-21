@@ -43,6 +43,15 @@ export default function Home() {
     <main className="mx-auto max-w-5xl px-4 py-8">
       <AppHeader subtitle="เลือกกิลเป้าหมายเพื่อจัดทีมเข้าตี" />
 
+      <div className="mb-5">
+        <Link
+          href="/library"
+          className="inline-block rounded-xl border border-emerald-200 px-4 py-2 text-sm font-semibold text-emerald-600 hover:bg-emerald-50"
+        >
+          🛡️ ดูทีมป้องกันของกิลเรา
+        </Link>
+      </div>
+
       {busy && <p className="text-gray-400">กำลังโหลด...</p>}
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600">

@@ -126,6 +126,7 @@ CREATE TABLE IF NOT EXISTS defense_library (
   formation   JSONB NOT NULL,
   link        TEXT,
   recommended JSONB NOT NULL DEFAULT '[]'::jsonb,
+  defense_rank INT,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -139,6 +140,7 @@ ALTER TABLE wars ADD COLUMN IF NOT EXISTS enemy_score INT;
 ALTER TABLE wars ADD COLUMN IF NOT EXISTS result TEXT;
 ALTER TABLE wars ADD COLUMN IF NOT EXISTS locked BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE defense_library ADD COLUMN IF NOT EXISTS recommended JSONB NOT NULL DEFAULT '[]'::jsonb;
+ALTER TABLE defense_library ADD COLUMN IF NOT EXISTS defense_rank INT;
 
 CREATE INDEX IF NOT EXISTS defense_war_idx ON defense_teams (war_id, sort_order);
 CREATE INDEX IF NOT EXISTS attack_war_member_idx ON attack_teams (war_id, member_id);
@@ -690,6 +692,7 @@ interface LibraryRow {
   formation: Formation;
   link: string | null;
   recommended: RecommendedTemplate[] | null;
+  defense_rank: number | null;
   created_at: Date;
 }
 const toLibrary = (r: LibraryRow): LibraryDefense => ({
@@ -698,10 +701,25 @@ const toLibrary = (r: LibraryRow): LibraryDefense => ({
   formation: r.formation,
   link: r.link,
   recommended: r.recommended ?? [],
+  defenseRank: r.defense_rank,
   createdAt: new Date(r.created_at).toISOString(),
 });
 
-const LIBRARY_COLS = "id, label, formation, link, recommended, created_at";
+const LIBRARY_COLS =
+  "id, label, formation, link, recommended, defense_rank, created_at";
+
+/** Mark/unmark a library team as one of our guild's chosen defenses. */
+export async function setLibraryRank(
+  id: string,
+  rank: number | null
+): Promise<LibraryDefense | null> {
+  await ensureSchema();
+  const { rows } = await getPool().query<LibraryRow>(
+    `UPDATE defense_library SET defense_rank = $2 WHERE id = $1 RETURNING ${LIBRARY_COLS}`,
+    [id, rank]
+  );
+  return rows[0] ? toLibrary(rows[0]) : null;
+}
 
 export async function listLibrary(): Promise<LibraryDefense[]> {
   await ensureSchema();

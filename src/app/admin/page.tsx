@@ -117,6 +117,12 @@ export default function AdminHome() {
         >
           จัดการตัวละคร
         </Link>
+        <Link
+          href="/library"
+          className="rounded-xl border border-gray-200 px-4 py-2 text-sm font-semibold text-gray-600 hover:bg-gray-50"
+        >
+          คลังกิล / ทีมป้องกัน
+        </Link>
       </div>
 
       {error && (

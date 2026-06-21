@@ -238,6 +238,8 @@ export interface LibraryDefense {
   link: string | null;
   /** Attack teams recommended for breaking this defense (carried with it). */
   recommended: RecommendedTemplate[];
+  /** If set, this is one of OUR guild's chosen defenses (rank for ordering). */
+  defenseRank: number | null;
   createdAt: string;
 }
 

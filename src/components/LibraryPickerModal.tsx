@@ -54,7 +54,12 @@ export function LibraryPickerModal({
       await fetch(`/api/wars/${warId}/defenses`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ label: e.label, formation: e.formation, link: e.link }),
+        body: JSON.stringify({
+          label: e.label,
+          formation: e.formation,
+          link: e.link,
+          recommended: e.recommended ?? [],
+        }),
       });
     }
     setAdding(false);
@@ -122,6 +127,11 @@ export function LibraryPickerModal({
                             ✓
                           </span>
                           {e.label || "ไม่มีชื่อ"}
+                          {(e.recommended?.length ?? 0) > 0 && (
+                            <span className="shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">
+                              ⭐ {e.recommended.length}
+                            </span>
+                          )}
                         </span>
                         <span className="flex shrink-0 items-center gap-2">
                           <button

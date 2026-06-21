@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession, requireAdmin } from "@/lib/auth";
-import { createDefense, listDefenses } from "@/lib/db";
-import { Formation } from "@/lib/types";
+import { createDefense, createRecommended, listDefenses } from "@/lib/db";
+import { Formation, sanitizeRecommended } from "@/lib/types";
 import { fail } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
@@ -29,6 +29,7 @@ export async function POST(
       label?: string;
       formation?: Formation;
       link?: string;
+      recommended?: unknown;
     };
     if (!body.formation || !body.formation.back || !body.formation.front) {
       return NextResponse.json({ error: "invalid formation" }, { status: 400 });
@@ -39,6 +40,15 @@ export async function POST(
       formation: body.formation,
       link: (body.link || "").trim() || null,
     });
+    // Carry any recommended attack teams (e.g. imported from the library).
+    for (const r of sanitizeRecommended(body.recommended)) {
+      await createRecommended({
+        defenseId: defense.id,
+        label: r.label,
+        formation: r.formation,
+        link: r.link,
+      });
+    }
     return NextResponse.json({ defense }, { status: 201 });
   } catch (err) {
     return fail(err);

@@ -218,13 +218,42 @@ export interface RecommendedTeam {
   createdAt: string;
 }
 
+/**
+ * A recommended attack team carried as a template (no own id/result) — used
+ * both inside a central-library entry and when copying to/from a war.
+ */
+export interface RecommendedTemplate {
+  label: string;
+  formation: Formation;
+  link: string | null;
+}
+
 /** A reusable defense template stored in the central library. */
 export interface LibraryDefense {
   id: string;
   label: string;
   formation: Formation;
   link: string | null;
+  /** Attack teams recommended for breaking this defense (carried with it). */
+  recommended: RecommendedTemplate[];
   createdAt: string;
+}
+
+/** Validate + normalize recommended-team templates from untrusted request input. */
+export function sanitizeRecommended(input: unknown): RecommendedTemplate[] {
+  if (!Array.isArray(input)) return [];
+  const out: RecommendedTemplate[] = [];
+  for (const raw of input) {
+    const r = raw as Partial<RecommendedTemplate>;
+    const f = r?.formation;
+    if (!f || !Array.isArray(f.back) || !Array.isArray(f.front)) continue;
+    out.push({
+      label: String(r.label ?? "").trim(),
+      formation: f,
+      link: (typeof r.link === "string" ? r.link.trim() : "") || null,
+    });
+  }
+  return out;
 }
 
 /** An enemy formation the guild needs to break. */

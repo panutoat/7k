@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth";
 import { deleteLibrary, updateLibrary } from "@/lib/db";
-import { Formation } from "@/lib/types";
+import { Formation, sanitizeRecommended } from "@/lib/types";
 import { fail } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +16,7 @@ export async function PUT(
       label?: string;
       formation?: Formation;
       link?: string;
+      recommended?: unknown;
     };
     if (!body.formation || !body.formation.back || !body.formation.front) {
       return NextResponse.json({ error: "invalid formation" }, { status: 400 });
@@ -24,6 +25,7 @@ export async function PUT(
       label: (body.label || "").trim(),
       formation: body.formation,
       link: (body.link || "").trim() || null,
+      recommended: sanitizeRecommended(body.recommended),
     });
     if (!entry) return NextResponse.json({ error: "not found" }, { status: 404 });
     return NextResponse.json({ entry });

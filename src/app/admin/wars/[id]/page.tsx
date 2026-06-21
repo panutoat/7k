@@ -127,12 +127,34 @@ export default function AdminWarPage() {
   }
 
   async function saveToLibrary(d: DefenseTeam) {
+    // Carry the defense's recommended attack teams into the library entry.
+    const rec = await fetch(`/api/defenses/${d.id}/recommended`)
+      .then((r) => r.json())
+      .catch(() => ({ recommended: [] }));
+    const recommended = (rec.recommended ?? []).map(
+      (t: { label: string; formation: unknown; link: string | null }) => ({
+        label: t.label,
+        formation: t.formation,
+        link: t.link,
+      })
+    );
     const res = await fetch("/api/library", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ label: d.label, formation: d.formation, link: d.link }),
+      body: JSON.stringify({
+        label: d.label,
+        formation: d.formation,
+        link: d.link,
+        recommended,
+      }),
     });
-    if (res.ok) alert("บันทึกเข้าคลังแล้ว");
+    if (res.ok) {
+      alert(
+        recommended.length > 0
+          ? `บันทึกเข้าคลังแล้ว (พร้อมทีมแนะนำ ${recommended.length} ทีม)`
+          : "บันทึกเข้าคลังแล้ว"
+      );
+    }
   }
 
   return (

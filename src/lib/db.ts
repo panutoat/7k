@@ -7,6 +7,7 @@ import {
   LibraryDefense,
   Member,
   RecommendedTeam,
+  RecommendedTemplate,
   Unit,
   UnitKind,
   War,
@@ -123,6 +124,7 @@ CREATE TABLE IF NOT EXISTS defense_library (
   label       TEXT NOT NULL DEFAULT '',
   formation   JSONB NOT NULL,
   link        TEXT,
+  recommended JSONB NOT NULL DEFAULT '[]'::jsonb,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -134,6 +136,7 @@ ALTER TABLE members ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ;
 ALTER TABLE wars ADD COLUMN IF NOT EXISTS our_score INT;
 ALTER TABLE wars ADD COLUMN IF NOT EXISTS enemy_score INT;
 ALTER TABLE wars ADD COLUMN IF NOT EXISTS result TEXT;
+ALTER TABLE defense_library ADD COLUMN IF NOT EXISTS recommended JSONB NOT NULL DEFAULT '[]'::jsonb;
 
 CREATE INDEX IF NOT EXISTS defense_war_idx ON defense_teams (war_id, sort_order);
 CREATE INDEX IF NOT EXISTS attack_war_member_idx ON attack_teams (war_id, member_id);
@@ -661,6 +664,7 @@ interface LibraryRow {
   label: string;
   formation: Formation;
   link: string | null;
+  recommended: RecommendedTemplate[] | null;
   created_at: Date;
 }
 const toLibrary = (r: LibraryRow): LibraryDefense => ({
@@ -668,13 +672,16 @@ const toLibrary = (r: LibraryRow): LibraryDefense => ({
   label: r.label,
   formation: r.formation,
   link: r.link,
+  recommended: r.recommended ?? [],
   createdAt: new Date(r.created_at).toISOString(),
 });
+
+const LIBRARY_COLS = "id, label, formation, link, recommended, created_at";
 
 export async function listLibrary(): Promise<LibraryDefense[]> {
   await ensureSchema();
   const { rows } = await getPool().query<LibraryRow>(
-    "SELECT id, label, formation, link, created_at FROM defense_library ORDER BY created_at DESC"
+    `SELECT ${LIBRARY_COLS} FROM defense_library ORDER BY created_at DESC`
   );
   return rows.map(toLibrary);
 }
@@ -683,27 +690,44 @@ export async function createLibrary(input: {
   label: string;
   formation: Formation;
   link: string | null;
+  recommended: RecommendedTemplate[];
 }): Promise<LibraryDefense> {
   await ensureSchema();
   const { rows } = await getPool().query<LibraryRow>(
-    `INSERT INTO defense_library (label, formation, link)
-     VALUES ($1, $2, $3)
-     RETURNING id, label, formation, link, created_at`,
-    [input.label, JSON.stringify(input.formation), input.link]
+    `INSERT INTO defense_library (label, formation, link, recommended)
+     VALUES ($1, $2, $3, $4)
+     RETURNING ${LIBRARY_COLS}`,
+    [
+      input.label,
+      JSON.stringify(input.formation),
+      input.link,
+      JSON.stringify(input.recommended),
+    ]
   );
   return toLibrary(rows[0]);
 }
 
 export async function updateLibrary(
   id: string,
-  input: { label: string; formation: Formation; link: string | null }
+  input: {
+    label: string;
+    formation: Formation;
+    link: string | null;
+    recommended: RecommendedTemplate[];
+  }
 ): Promise<LibraryDefense | null> {
   await ensureSchema();
   const { rows } = await getPool().query<LibraryRow>(
-    `UPDATE defense_library SET label = $2, formation = $3, link = $4
+    `UPDATE defense_library SET label = $2, formation = $3, link = $4, recommended = $5
      WHERE id = $1
-     RETURNING id, label, formation, link, created_at`,
-    [id, input.label, JSON.stringify(input.formation), input.link]
+     RETURNING ${LIBRARY_COLS}`,
+    [
+      id,
+      input.label,
+      JSON.stringify(input.formation),
+      input.link,
+      JSON.stringify(input.recommended),
+    ]
   );
   return rows[0] ? toLibrary(rows[0]) : null;
 }

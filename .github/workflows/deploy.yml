@@ -1,0 +1,46 @@
+name: Deploy to Vercel
+
+# Vercel's git integration is tied to a single account (panutoat), so instead of
+# letting Vercel auto-deploy on push we trigger a Deploy Hook from CI. The hook
+# URL is stored as the repo secret VERCEL_DEPLOY_HOOK.
+on:
+  push:
+    branches: [main]
+  workflow_dispatch: {}
+
+# Avoid stacking deploys if several pushes land quickly.
+concurrency:
+  group: vercel-deploy
+  cancel-in-progress: true
+
+jobs:
+  # Build gate: don't trigger a Vercel deploy if the project doesn't compile.
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Type-check
+        run: node node_modules/typescript/lib/tsc.js --noEmit
+      - name: Build
+        run: npm run build
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Vercel Deploy Hook
+        env:
+          VERCEL_DEPLOY_HOOK: ${{ secrets.VERCEL_DEPLOY_HOOK }}
+        run: |
+          if [ -z "$VERCEL_DEPLOY_HOOK" ]; then
+            echo "::error::Secret VERCEL_DEPLOY_HOOK is not set"
+            exit 1
+          fi
+          echo "Triggering Vercel deploy hook..."
+          curl -fsSL -X POST "$VERCEL_DEPLOY_HOOK"
+          echo "Deploy hook triggered."

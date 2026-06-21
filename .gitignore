@@ -7,3 +7,4 @@ out
 .DS_Store
 next-env.d.ts.bak
 .pglite
+tsconfig.tsbuildinfo

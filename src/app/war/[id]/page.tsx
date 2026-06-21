@@ -94,6 +94,7 @@ export default function MemberWarPage() {
   const doneCount = myAttacks.filter((a) => a.done).length;
   const winCount = myAttacks.filter((a) => a.result === "win").length;
   const lossCount = myAttacks.filter((a) => a.result === "loss").length;
+  const locked = !!war?.locked;
 
   return (
     <main className="mx-auto max-w-5xl px-4 py-8">
@@ -109,6 +110,12 @@ export default function MemberWarPage() {
           <span className="font-semibold text-red-500">แพ้ {lossCount}</span>
         </span>
       </div>
+
+      {war?.locked && (
+        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm font-medium text-amber-700">
+          🔒 กิลวอร์นี้จบแล้ว — แก้ไขทีมไม่ได้ (ดูได้อย่างเดียว)
+        </div>
+      )}
 
       {error && (
         <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-4 text-sm text-red-600">
@@ -153,22 +160,24 @@ export default function MemberWarPage() {
                     </span>
                   )}
                 </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => setEditSlot(slot)}
-                    className="rounded-lg border border-gray-200 px-3 py-1 text-xs font-medium hover:bg-gray-50"
-                  >
-                    {atk?.formation ? "แก้ไข" : "จัดทีม"}
-                  </button>
-                  {atk && (
+                {!locked && (
+                  <div className="flex gap-2">
                     <button
-                      onClick={() => clearSlot(atk.id)}
-                      className="rounded-lg border border-gray-200 px-3 py-1 text-xs font-medium text-red-500 hover:bg-red-50"
+                      onClick={() => setEditSlot(slot)}
+                      className="rounded-lg border border-gray-200 px-3 py-1 text-xs font-medium hover:bg-gray-50"
                     >
-                      ลบ
+                      {atk?.formation ? "แก้ไข" : "จัดทีม"}
                     </button>
-                  )}
-                </div>
+                    {atk && (
+                      <button
+                        onClick={() => clearSlot(atk.id)}
+                        className="rounded-lg border border-gray-200 px-3 py-1 text-xs font-medium text-red-500 hover:bg-red-50"
+                      >
+                        ลบ
+                      </button>
+                    )}
+                  </div>
+                )}
               </div>
 
               {atk?.formation ? (
@@ -219,7 +228,7 @@ export default function MemberWarPage() {
                 </div>
               )}
 
-              {atk && (
+              {atk && !locked && (
                 <div className="mt-2 flex gap-2">
                   <button
                     onClick={() => setResult(atk, "win")}

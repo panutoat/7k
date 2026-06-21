@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession, requireAdmin } from "@/lib/auth";
-import { deleteWar, getWar, updateWar } from "@/lib/db";
+import { deleteWar, getWar, memberLoginCountsForWar, updateWar } from "@/lib/db";
 import { fail } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +13,9 @@ export async function GET(
     if (!getSession()) return NextResponse.json({ error: "กรุณาเข้าสู่ระบบ" }, { status: 401 });
     const war = await getWar(params.id);
     if (!war) return NextResponse.json({ error: "not found" }, { status: 404 });
-    return NextResponse.json({ war });
+    // Login counts scoped to this war's day (admin board uses this).
+    const loginCounts = await memberLoginCountsForWar(params.id);
+    return NextResponse.json({ war, loginCounts });
   } catch (err) {
     return fail(err);
   }
@@ -28,6 +30,7 @@ export async function PUT(
     const body = (await req.json()) as {
       name?: string;
       active?: boolean;
+      locked?: boolean;
       ourScore?: number | null;
       enemyScore?: number | null;
       result?: "win" | "lose" | null;
@@ -40,6 +43,7 @@ export async function PUT(
     const war = await updateWar(params.id, {
       name: typeof body.name === "string" ? body.name.trim() : undefined,
       active: typeof body.active === "boolean" ? body.active : undefined,
+      locked: typeof body.locked === "boolean" ? body.locked : undefined,
       ourScore: "ourScore" in body ? num(body.ourScore) : undefined,
       enemyScore: "enemyScore" in body ? num(body.enemyScore) : undefined,
       result:

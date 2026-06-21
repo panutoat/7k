@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { deleteAttack, getAttack, patchAttack } from "@/lib/db";
+import { deleteAttack, getAttack, getWar, patchAttack } from "@/lib/db";
 import { fail } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +18,12 @@ export async function PUT(
     if (!existing) return NextResponse.json({ error: "not found" }, { status: 404 });
     if (session.role !== "admin" && session.memberId !== existing.memberId) {
       return NextResponse.json({ error: "ไม่มีสิทธิ์" }, { status: 403 });
+    }
+    if (session.role !== "admin") {
+      const war = await getWar(existing.warId);
+      if (war?.locked) {
+        return NextResponse.json({ error: "กิลวอร์จบแล้ว แก้ไขไม่ได้" }, { status: 403 });
+      }
     }
 
     const body = (await req.json()) as {
@@ -53,6 +59,12 @@ export async function DELETE(
     if (!existing) return NextResponse.json({ error: "not found" }, { status: 404 });
     if (session.role !== "admin" && session.memberId !== existing.memberId) {
       return NextResponse.json({ error: "ไม่มีสิทธิ์" }, { status: 403 });
+    }
+    if (session.role !== "admin") {
+      const war = await getWar(existing.warId);
+      if (war?.locked) {
+        return NextResponse.json({ error: "กิลวอร์จบแล้ว แก้ไขไม่ได้" }, { status: 403 });
+      }
     }
     await deleteAttack(params.id);
     return NextResponse.json({ ok: true });

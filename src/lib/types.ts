@@ -201,6 +201,8 @@ export interface War {
   /** Target guild name. */
   name: string;
   active: boolean;
+  /** When true, members cannot edit their teams (war ended). */
+  locked: boolean;
   /** Final scores + result, entered by an admin after the war. */
   ourScore: number | null;
   enemyScore: number | null;

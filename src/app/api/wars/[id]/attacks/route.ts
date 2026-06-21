@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getSession } from "@/lib/auth";
-import { listAttacks, memberUsedUnitIds, upsertAttack } from "@/lib/db";
+import { getWar, listAttacks, memberUsedUnitIds, upsertAttack } from "@/lib/db";
 import { ATTACK_SLOTS, Formation, formationUnitIds } from "@/lib/types";
 import { fail } from "@/lib/api";
 
@@ -26,6 +26,14 @@ export async function POST(
   try {
     const session = getSession();
     if (!session) return NextResponse.json({ error: "กรุณาเข้าสู่ระบบ" }, { status: 401 });
+
+    // Members cannot edit once the war is locked; admins still can.
+    if (session.role !== "admin") {
+      const war = await getWar(params.id);
+      if (war?.locked) {
+        return NextResponse.json({ error: "กิลวอร์จบแล้ว แก้ไขไม่ได้" }, { status: 403 });
+      }
+    }
 
     const body = (await req.json()) as {
       memberId?: string;

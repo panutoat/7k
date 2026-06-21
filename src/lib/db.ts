@@ -76,6 +76,7 @@ CREATE TABLE IF NOT EXISTS wars (
   id           UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name         TEXT NOT NULL,
   active       BOOLEAN NOT NULL DEFAULT true,
+  locked       BOOLEAN NOT NULL DEFAULT false,
   our_score    INT,
   enemy_score  INT,
   result       TEXT CHECK (result IN ('win','lose')),
@@ -136,6 +137,7 @@ ALTER TABLE members ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ;
 ALTER TABLE wars ADD COLUMN IF NOT EXISTS our_score INT;
 ALTER TABLE wars ADD COLUMN IF NOT EXISTS enemy_score INT;
 ALTER TABLE wars ADD COLUMN IF NOT EXISTS result TEXT;
+ALTER TABLE wars ADD COLUMN IF NOT EXISTS locked BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE defense_library ADD COLUMN IF NOT EXISTS recommended JSONB NOT NULL DEFAULT '[]'::jsonb;
 
 CREATE INDEX IF NOT EXISTS defense_war_idx ON defense_teams (war_id, sort_order);
@@ -436,6 +438,7 @@ interface WarRow {
   id: string;
   name: string;
   active: boolean;
+  locked: boolean;
   our_score: number | null;
   enemy_score: number | null;
   result: "win" | "lose" | null;
@@ -445,6 +448,7 @@ const toWar = (r: WarRow): War => ({
   id: r.id,
   name: r.name,
   active: r.active,
+  locked: r.locked ?? false,
   ourScore: r.our_score,
   enemyScore: r.enemy_score,
   result: r.result,
@@ -452,7 +456,7 @@ const toWar = (r: WarRow): War => ({
 });
 
 const WAR_COLS =
-  "id, name, active, our_score, enemy_score, result, created_at";
+  "id, name, active, locked, our_score, enemy_score, result, created_at";
 
 export async function listWars(activeOnly = false): Promise<War[]> {
   await ensureSchema();
@@ -487,6 +491,7 @@ export async function updateWar(
   patch: {
     name?: string;
     active?: boolean;
+    locked?: boolean;
     ourScore?: number | null;
     enemyScore?: number | null;
     result?: "win" | "lose" | null;
@@ -499,7 +504,8 @@ export async function updateWar(
        active = COALESCE($3, active),
        our_score = CASE WHEN $4::boolean THEN $5 ELSE our_score END,
        enemy_score = CASE WHEN $6::boolean THEN $7 ELSE enemy_score END,
-       result = CASE WHEN $8::boolean THEN $9 ELSE result END
+       result = CASE WHEN $8::boolean THEN $9 ELSE result END,
+       locked = COALESCE($10, locked)
      WHERE id = $1
      RETURNING ${WAR_COLS}`,
     [
@@ -512,9 +518,28 @@ export async function updateWar(
       patch.enemyScore ?? null,
       patch.result !== undefined,
       patch.result ?? null,
+      patch.locked ?? null,
     ]
   );
   return rows[0] ? toWar(rows[0]) : null;
+}
+
+/** Login counts on a war's creation day (Asia/Bangkok), keyed by member id. */
+export async function memberLoginCountsForWar(
+  warId: string
+): Promise<Record<string, number>> {
+  await ensureSchema();
+  const { rows } = await getPool().query<{ member_id: string; count: number }>(
+    `SELECT ml.member_id, ml.count
+     FROM member_logins ml
+     WHERE ml.day = (
+       SELECT (created_at AT TIME ZONE 'Asia/Bangkok')::date FROM wars WHERE id = $1
+     )`,
+    [warId]
+  );
+  const map: Record<string, number> = {};
+  for (const r of rows) map[r.member_id] = Number(r.count);
+  return map;
 }
 
 export async function deleteWar(id: string): Promise<boolean> {

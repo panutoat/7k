@@ -29,6 +29,7 @@ export default function AdminWarPage() {
   const [defenses, setDefenses] = useState<DefenseTeam[]>([]);
   const [attacks, setAttacks] = useState<AttackTeam[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
+  const [loginCounts, setLoginCounts] = useState<Record<string, number>>({});
   const [busy, setBusy] = useState(true);
   const [showDefense, setShowDefense] = useState(false);
   const [showLibrary, setShowLibrary] = useState(false);
@@ -56,11 +57,22 @@ export default function AdminWarPage() {
       fetch("/api/members").then((r) => r.json()),
     ]);
     setWar(w.war ?? null);
+    setLoginCounts(w.loginCounts ?? {});
     setDefenses(d.defenses ?? []);
     setAttacks(a.attacks ?? []);
     setMembers(m.members ?? []);
     setBusy(false);
   }, [id]);
+
+  async function toggleLock() {
+    if (!war) return;
+    await fetch(`/api/wars/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ locked: !war.locked }),
+    });
+    load();
+  }
 
   useEffect(() => {
     if (isAdmin) load();
@@ -160,9 +172,28 @@ export default function AdminWarPage() {
   return (
     <main className="mx-auto max-w-6xl px-4 py-8">
       <AppHeader subtitle={war ? `จัดการกิล: ${war.name}` : undefined} />
-      <Link href="/admin" className="text-sm text-gray-400 hover:text-gray-600">
-        ← กลับหน้าจัดการ
-      </Link>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <Link href="/admin" className="text-sm text-gray-400 hover:text-gray-600">
+          ← กลับหน้าจัดการ
+        </Link>
+        {war && (
+          <button
+            onClick={toggleLock}
+            className={`rounded-xl px-4 py-2 text-sm font-semibold ${
+              war.locked
+                ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                : "bg-rose-500 text-white hover:bg-rose-600"
+            }`}
+          >
+            {war.locked ? "🔓 ปลดล็อกให้แก้ไข" : "🔒 จบวอร์ / ห้ามแก้ไข"}
+          </button>
+        )}
+      </div>
+      {war?.locked && (
+        <p className="mt-2 rounded-xl bg-gray-100 px-3 py-2 text-sm text-gray-500">
+          กิลวอร์นี้ถูกล็อก — สมาชิกแก้ไขทีมไม่ได้ (แอดมินยังแก้ได้)
+        </p>
+      )}
 
       {busy && <p className="mt-4 text-gray-400">กำลังโหลด...</p>}
 
@@ -280,7 +311,7 @@ export default function AdminWarPage() {
                   <th className="px-3 py-3 text-center font-medium text-green-600">ชนะ</th>
                   <th className="px-3 py-3 text-center font-medium text-red-500">แพ้</th>
                   <th className="px-3 py-3 text-center font-medium">ร่วม%</th>
-                  <th className="px-3 py-3 text-center font-medium">ล็อกอินวันนี้</th>
+                  <th className="px-3 py-3 text-center font-medium">ล็อกอิน</th>
                 </tr>
               </thead>
               <tbody>
@@ -337,16 +368,9 @@ export default function AdminWarPage() {
                       </td>
                       <td className="px-3 py-2 text-center text-gray-500">{part}%</td>
                       <td className="px-3 py-2 text-center">
-                        {m.loginToday > 0 ? (
-                          <span
-                            className="font-semibold text-green-600"
-                            title={
-                              m.lastLoginAt
-                                ? new Date(m.lastLoginAt).toLocaleString("th-TH")
-                                : undefined
-                            }
-                          >
-                            {m.loginToday}
+                        {(loginCounts[m.id] ?? 0) > 0 ? (
+                          <span className="font-semibold text-green-600">
+                            {loginCounts[m.id]}
                           </span>
                         ) : (
                           <span className="text-gray-300">—</span>

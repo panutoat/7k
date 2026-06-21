@@ -33,11 +33,13 @@ export function LibraryEditModal({
   const [recEditing, setRecEditing] = useState<number | "new" | null>(null);
   const [recLabel, setRecLabel] = useState("");
   const [recLink, setRecLink] = useState("");
+  const [recNote, setRecNote] = useState("");
   const [recFormation, setRecFormation] = useState<Formation>(emptyFormation());
 
   function startAddRec() {
     setRecLabel("");
     setRecLink("");
+    setRecNote("");
     setRecFormation(emptyFormation());
     setRecEditing("new");
   }
@@ -46,6 +48,7 @@ export function LibraryEditModal({
     const r = recommended[i];
     setRecLabel(r.label);
     setRecLink(r.link ?? "");
+    setRecNote(r.note ?? "");
     setRecFormation(r.formation);
     setRecEditing(i);
   }
@@ -55,6 +58,7 @@ export function LibraryEditModal({
       label: recLabel.trim(),
       formation: recFormation,
       link: recLink.trim() || null,
+      note: recNote.trim() || null,
     };
     setRecommended((prev) =>
       recEditing === "new"
@@ -192,6 +196,13 @@ export function LibraryEditModal({
                     className="rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-rose-300"
                   />
                 </div>
+                <textarea
+                  value={recNote}
+                  onChange={(e) => setRecNote(e.target.value)}
+                  rows={2}
+                  placeholder="โน้ต/คำอธิบาย (สมาชิกเห็นเป็น tooltip)"
+                  className="mb-3 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-rose-300"
+                />
                 <FormationEditor value={recFormation} onChange={setRecFormation} />
                 <div className="mt-3 flex justify-end gap-2">
                   <button

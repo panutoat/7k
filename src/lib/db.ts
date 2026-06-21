@@ -89,6 +89,7 @@ CREATE TABLE IF NOT EXISTS defense_teams (
   label       TEXT NOT NULL DEFAULT '',
   formation   JSONB NOT NULL,
   link        TEXT,
+  note        TEXT,
   sort_order  INT  NOT NULL DEFAULT 0,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -115,6 +116,7 @@ CREATE TABLE IF NOT EXISTS recommended_teams (
   label       TEXT NOT NULL DEFAULT '',
   formation   JSONB NOT NULL,
   link        TEXT,
+  note        TEXT,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 CREATE INDEX IF NOT EXISTS recommended_defense_idx ON recommended_teams (defense_id);
@@ -132,6 +134,8 @@ CREATE TABLE IF NOT EXISTS defense_library (
 
 -- Migrations for DBs created before these columns existed.
 ALTER TABLE defense_teams ADD COLUMN IF NOT EXISTS link TEXT;
+ALTER TABLE defense_teams ADD COLUMN IF NOT EXISTS note TEXT;
+ALTER TABLE recommended_teams ADD COLUMN IF NOT EXISTS note TEXT;
 ALTER TABLE attack_teams  ADD COLUMN IF NOT EXISTS link TEXT;
 ALTER TABLE attack_teams  ADD COLUMN IF NOT EXISTS result TEXT;
 ALTER TABLE members ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ;
@@ -560,6 +564,7 @@ interface DefenseRow {
   label: string;
   formation: Formation;
   link: string | null;
+  note: string | null;
   sort_order: number;
   created_at: Date;
 }
@@ -569,11 +574,13 @@ const toDefense = (r: DefenseRow): DefenseTeam => ({
   label: r.label,
   formation: r.formation,
   link: r.link,
+  note: r.note,
   sortOrder: r.sort_order,
   createdAt: new Date(r.created_at).toISOString(),
 });
 
-const DEFENSE_COLS = "id, war_id, label, formation, link, sort_order, created_at";
+const DEFENSE_COLS =
+  "id, war_id, label, formation, link, note, sort_order, created_at";
 
 export async function listDefenses(warId: string): Promise<DefenseTeam[]> {
   await ensureSchema();
@@ -589,6 +596,7 @@ export async function createDefense(input: {
   label: string;
   formation: Formation;
   link: string | null;
+  note: string | null;
 }): Promise<DefenseTeam> {
   await ensureSchema();
   const pool = getPool();
@@ -598,23 +606,30 @@ export async function createDefense(input: {
   );
   const sortOrder = (maxRows[0]?.m ?? 0) + 1;
   const { rows } = await pool.query<DefenseRow>(
-    `INSERT INTO defense_teams (war_id, label, formation, link, sort_order)
-     VALUES ($1, $2, $3, $4, $5)
+    `INSERT INTO defense_teams (war_id, label, formation, link, note, sort_order)
+     VALUES ($1, $2, $3, $4, $5, $6)
      RETURNING ${DEFENSE_COLS}`,
-    [input.warId, input.label, JSON.stringify(input.formation), input.link, sortOrder]
+    [
+      input.warId,
+      input.label,
+      JSON.stringify(input.formation),
+      input.link,
+      input.note,
+      sortOrder,
+    ]
   );
   return toDefense(rows[0]);
 }
 
 export async function updateDefense(
   id: string,
-  input: { label: string; formation: Formation; link: string | null }
+  input: { label: string; formation: Formation; link: string | null; note: string | null }
 ): Promise<DefenseTeam | null> {
   await ensureSchema();
   const { rows } = await getPool().query<DefenseRow>(
-    `UPDATE defense_teams SET label = $2, formation = $3, link = $4
+    `UPDATE defense_teams SET label = $2, formation = $3, link = $4, note = $5
      WHERE id = $1 RETURNING ${DEFENSE_COLS}`,
-    [id, input.label, JSON.stringify(input.formation), input.link]
+    [id, input.label, JSON.stringify(input.formation), input.link, input.note]
   );
   return rows[0] ? toDefense(rows[0]) : null;
 }
@@ -635,6 +650,7 @@ interface RecRow {
   label: string;
   formation: Formation;
   link: string | null;
+  note: string | null;
   created_at: Date;
 }
 const toRec = (r: RecRow): RecommendedTeam => ({
@@ -643,9 +659,10 @@ const toRec = (r: RecRow): RecommendedTeam => ({
   label: r.label,
   formation: r.formation,
   link: r.link,
+  note: r.note,
   createdAt: new Date(r.created_at).toISOString(),
 });
-const REC_COLS = "id, defense_id, label, formation, link, created_at";
+const REC_COLS = "id, defense_id, label, formation, link, note, created_at";
 
 export async function listRecommended(
   defenseId: string
@@ -663,12 +680,19 @@ export async function createRecommended(input: {
   label: string;
   formation: Formation;
   link: string | null;
+  note: string | null;
 }): Promise<RecommendedTeam> {
   await ensureSchema();
   const { rows } = await getPool().query<RecRow>(
-    `INSERT INTO recommended_teams (defense_id, label, formation, link)
-     VALUES ($1, $2, $3, $4) RETURNING ${REC_COLS}`,
-    [input.defenseId, input.label, JSON.stringify(input.formation), input.link]
+    `INSERT INTO recommended_teams (defense_id, label, formation, link, note)
+     VALUES ($1, $2, $3, $4, $5) RETURNING ${REC_COLS}`,
+    [
+      input.defenseId,
+      input.label,
+      JSON.stringify(input.formation),
+      input.link,
+      input.note,
+    ]
   );
   return toRec(rows[0]);
 }

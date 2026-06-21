@@ -19,6 +19,7 @@ export function DefenseModal({
 }) {
   const [label, setLabel] = useState(initial?.label ?? "");
   const [link, setLink] = useState(initial?.link ?? "");
+  const [note, setNote] = useState(initial?.note ?? "");
   const [formation, setFormation] = useState<Formation>(
     initial?.formation ?? emptyFormation()
   );
@@ -34,7 +35,12 @@ export function DefenseModal({
         {
           method: initial ? "PUT" : "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ label: label.trim(), formation, link: link.trim() }),
+          body: JSON.stringify({
+            label: label.trim(),
+            formation,
+            link: link.trim(),
+            note: note.trim(),
+          }),
         }
       );
       const data = await res.json();
@@ -80,6 +86,18 @@ export function DefenseModal({
               value={link}
               onChange={(e) => setLink(e.target.value)}
               placeholder="วางลิงก์ทีมจาก 7k-combo"
+              className="w-full rounded-xl border border-gray-200 px-4 py-2 text-sm outline-none focus:border-rose-300"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-sm text-gray-500">
+              โน้ต/คำอธิบาย (สมาชิกเห็นเป็น tooltip)
+            </label>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={2}
+              placeholder="เช่น ระวังตัวคืนชีพ / ใส่ตัวลดเกราะ"
               className="w-full rounded-xl border border-gray-200 px-4 py-2 text-sm outline-none focus:border-rose-300"
             />
           </div>

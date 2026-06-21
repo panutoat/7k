@@ -217,6 +217,8 @@ export interface RecommendedTeam {
   label: string;
   formation: Formation;
   link: string | null;
+  /** Admin note/remark shown to members as a tooltip. */
+  note: string | null;
   createdAt: string;
 }
 
@@ -228,6 +230,8 @@ export interface RecommendedTemplate {
   label: string;
   formation: Formation;
   link: string | null;
+  /** Admin note/remark shown to members as a tooltip. */
+  note: string | null;
 }
 
 /** A reusable defense template stored in the central library. */
@@ -255,6 +259,7 @@ export function sanitizeRecommended(input: unknown): RecommendedTemplate[] {
       label: String(r.label ?? "").trim(),
       formation: f,
       link: (typeof r.link === "string" ? r.link.trim() : "") || null,
+      note: (typeof r.note === "string" ? r.note.trim() : "") || null,
     });
   }
   return out;
@@ -268,6 +273,8 @@ export interface DefenseTeam {
   formation: Formation;
   /** Optional 7k-combo (or any) reference link. */
   link: string | null;
+  /** Admin note/remark shown to members as a tooltip. */
+  note: string | null;
   sortOrder: number;
   createdAt: string;
 }

@@ -29,6 +29,7 @@ export async function POST(
       label?: string;
       formation?: Formation;
       link?: string;
+      note?: string;
     };
     if (!body.formation || !body.formation.back || !body.formation.front) {
       return NextResponse.json({ error: "invalid formation" }, { status: 400 });
@@ -38,6 +39,7 @@ export async function POST(
       label: (body.label || "").trim(),
       formation: body.formation,
       link: (body.link || "").trim() || null,
+      note: (body.note || "").trim() || null,
     });
     return NextResponse.json({ team }, { status: 201 });
   } catch (err) {

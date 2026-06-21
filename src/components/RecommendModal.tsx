@@ -25,6 +25,7 @@ export function RecommendModal({
   const [adding, setAdding] = useState(false);
   const [label, setLabel] = useState("");
   const [link, setLink] = useState("");
+  const [note, setNote] = useState("");
   const [formation, setFormation] = useState<Formation>(emptyFormation());
   const [error, setError] = useState<string | null>(null);
 
@@ -46,12 +47,18 @@ export function RecommendModal({
     const res = await fetch(`/api/defenses/${defense.id}/recommended`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ label: label.trim(), formation, link: link.trim() }),
+      body: JSON.stringify({
+        label: label.trim(),
+        formation,
+        link: link.trim(),
+        note: note.trim(),
+      }),
     });
     const data = await res.json();
     if (!res.ok) return setError(data.error || "บันทึกไม่สำเร็จ");
     setLabel("");
     setLink("");
+    setNote("");
     setFormation(emptyFormation());
     setAdding(false);
     load();
@@ -126,6 +133,13 @@ export function RecommendModal({
                   className="rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-rose-300"
                 />
               </div>
+              <textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                rows={2}
+                placeholder="โน้ต/คำอธิบาย (สมาชิกเห็นเป็น tooltip)"
+                className="mb-3 w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-rose-300"
+              />
               <FormationEditor value={formation} onChange={setFormation} />
               {error && <p className="mt-2 text-sm text-red-500">{error}</p>}
               <div className="mt-3 flex justify-end gap-2">

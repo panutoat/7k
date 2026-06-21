@@ -219,12 +219,19 @@ export default function MemberWarPage() {
               )}
 
               {target && (
-                <div className="mt-3 rounded-xl border border-blue-100 bg-blue-50/50 p-3">
+                <div
+                  className="mt-3 rounded-xl border border-blue-100 bg-blue-50/50 p-3"
+                  title={target.note || undefined}
+                >
                   <p className="mb-1.5 text-xs font-semibold text-blue-600">
                     🛡️ ตีทีมป้องกัน #{targetIdx}
                     {target.label ? ` · ${target.label}` : ""}
+                    {target.note && <span title={target.note}> 📝</span>}
                   </p>
                   <FormationPreview formation={target.formation} size={34} />
+                  {target.note && (
+                    <p className="mt-1 text-[11px] text-gray-500">{target.note}</p>
+                  )}
                 </div>
               )}
 

@@ -166,6 +166,7 @@ export function AttackTeamModal({
                       key={d.id}
                       type="button"
                       onClick={() => setTargetId(active ? null : d.id)}
+                      title={d.note || undefined}
                       className={`rounded-xl border p-2 text-left transition ${
                         active
                           ? "border-rose-400 bg-rose-50 ring-1 ring-rose-300"
@@ -175,6 +176,7 @@ export function AttackTeamModal({
                       <p className="mb-1 truncate text-xs font-semibold text-gray-600">
                         #{i + 1}
                         {d.label ? ` · ${d.label}` : ""}
+                        {d.note && <span title={d.note}> 📝</span>}
                       </p>
                       <FormationPreview formation={d.formation} size={26} showType={false} />
                     </button>
@@ -196,12 +198,19 @@ export function AttackTeamModal({
                     key={t.id}
                     type="button"
                     onClick={() => applyFormation(t.formation, t.link)}
+                    title={t.note || undefined}
                     className="rounded-xl border-2 border-amber-300 bg-amber-50/60 p-2 text-left transition hover:border-amber-400"
                   >
-                    <p className="mb-1 truncate text-[11px] font-semibold text-amber-700">
-                      ⭐ {t.label || "ทีมแนะนำ"}
+                    <p className="mb-1 flex items-center gap-1 truncate text-[11px] font-semibold text-amber-700">
+                      <span className="truncate">⭐ {t.label || "ทีมแนะนำ"}</span>
+                      {t.note && <span title={t.note}>📝</span>}
                     </p>
                     <FormationPreview formation={t.formation} size={24} showType={false} />
+                    {t.note && (
+                      <p className="mt-1 line-clamp-2 text-[10px] text-gray-500">
+                        {t.note}
+                      </p>
+                    )}
                   </button>
                 ))}
               </div>

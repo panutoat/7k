@@ -144,10 +144,16 @@ export default function AdminWarPage() {
       .then((r) => r.json())
       .catch(() => ({ recommended: [] }));
     const recommended = (rec.recommended ?? []).map(
-      (t: { label: string; formation: unknown; link: string | null }) => ({
+      (t: {
+        label: string;
+        formation: unknown;
+        link: string | null;
+        note: string | null;
+      }) => ({
         label: t.label,
         formation: t.formation,
         link: t.link,
+        note: t.note ?? null,
       })
     );
     const res = await fetch("/api/library", {

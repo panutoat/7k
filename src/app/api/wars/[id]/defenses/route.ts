@@ -29,6 +29,7 @@ export async function POST(
       label?: string;
       formation?: Formation;
       link?: string;
+      note?: string;
       recommended?: unknown;
     };
     if (!body.formation || !body.formation.back || !body.formation.front) {
@@ -39,6 +40,7 @@ export async function POST(
       label: (body.label || "").trim(),
       formation: body.formation,
       link: (body.link || "").trim() || null,
+      note: (body.note || "").trim() || null,
     });
     // Carry any recommended attack teams (e.g. imported from the library).
     for (const r of sanitizeRecommended(body.recommended)) {
@@ -47,6 +49,7 @@ export async function POST(
         label: r.label,
         formation: r.formation,
         link: r.link,
+        note: r.note,
       });
     }
     return NextResponse.json({ defense }, { status: 201 });

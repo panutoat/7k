@@ -28,3 +28,58 @@ body {
   background: #d1d5db;
   border-radius: 999px;
 }
+
+/* ------------------------------------------------------------------ */
+/* Dark mode — override the neutral surfaces/text/borders the app uses */
+/* so we don't have to add dark: variants to every component.          */
+/* ------------------------------------------------------------------ */
+html.dark {
+  color-scheme: dark;
+}
+html.dark body {
+  background: #0b0f17;
+  color: #e5e7eb;
+}
+
+.dark .bg-white { background-color: #161b25 !important; }
+.dark .bg-gray-50,
+.dark .bg-gray-100 { background-color: #1f2733 !important; }
+
+.dark .bg-rose-50,
+.dark .bg-rose-100 { background-color: #2a1c22 !important; }
+.dark .bg-amber-50,
+.dark .bg-amber-100 { background-color: #2a2415 !important; }
+.dark .bg-emerald-50,
+.dark .bg-green-50,
+.dark .bg-green-100 { background-color: #14241c !important; }
+.dark .bg-blue-50 { background-color: #16202e !important; }
+.dark .bg-red-50,
+.dark .bg-red-100 { background-color: #2a181a !important; }
+
+.dark .text-gray-900,
+.dark .text-gray-800,
+.dark .text-gray-700 { color: #e5e7eb !important; }
+.dark .text-gray-600,
+.dark .text-gray-500 { color: #b6bdc8 !important; }
+.dark .text-gray-400 { color: #8b92a0 !important; }
+.dark .text-gray-300 { color: #5b6473 !important; }
+
+.dark .border-gray-100,
+.dark .border-gray-200 { border-color: #2a3340 !important; }
+.dark .border-gray-300 { border-color: #3a4554 !important; }
+
+/* Form controls (many have no explicit bg class) */
+.dark input,
+.dark textarea,
+.dark select {
+  background-color: #161b25;
+  color: #e5e7eb;
+  border-color: #374151;
+}
+.dark input::placeholder,
+.dark textarea::placeholder { color: #6b7280; }
+
+/* Slightly stronger card shadow on dark */
+.dark .shadow-sm,
+.dark .shadow,
+.dark .shadow-card { box-shadow: 0 6px 20px -10px rgba(0, 0, 0, 0.6); }

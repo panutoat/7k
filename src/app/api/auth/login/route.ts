@@ -40,7 +40,12 @@ export async function POST(req: Request) {
         );
       }
       await touchMemberLogin(member.id);
-      session = { role: "member", memberId: member.id, name: member.name };
+      session = {
+        role: "member",
+        memberId: member.id,
+        name: member.name,
+        nickname: member.nickname,
+      };
     }
 
     const res = NextResponse.json({ session });

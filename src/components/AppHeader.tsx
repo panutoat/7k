@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { ThemeToggle } from "./ThemeToggle";
 
 export function AppHeader({ subtitle }: { subtitle?: string }) {
   const { session, isAdmin, logout, reload } = useAuth();
@@ -21,7 +22,7 @@ export function AppHeader({ subtitle }: { subtitle?: string }) {
 
   async function renameSelf() {
     if (!session?.memberId) return;
-    const name = window.prompt("เปลี่ยนชื่อโปรไฟล์ (ใช้ชื่อใหม่ login ครั้งต่อไป)", session.name);
+    const name = window.prompt("เปลี่ยนชื่อล็อกอิน (ใช้ชื่อใหม่ login ครั้งต่อไป)", session.name);
     if (!name || !name.trim() || name.trim() === session.name) return;
     const res = await fetch(`/api/members/${session.memberId}`, {
       method: "PUT",
@@ -30,6 +31,20 @@ export function AppHeader({ subtitle }: { subtitle?: string }) {
     });
     const data = await res.json();
     if (!res.ok) return alert(data.error || "เปลี่ยนชื่อไม่สำเร็จ");
+    await reload();
+  }
+
+  async function setNickname() {
+    if (!session?.memberId) return;
+    const nick = window.prompt("ตั้งชื่อเล่น (ชื่อที่โชว์)", session.nickname ?? "");
+    if (nick === null) return;
+    const res = await fetch(`/api/members/${session.memberId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nickname: nick.trim() }),
+    });
+    const data = await res.json();
+    if (!res.ok) return alert(data.error || "ตั้งชื่อเล่นไม่สำเร็จ");
     await reload();
   }
 
@@ -42,6 +57,7 @@ export function AppHeader({ subtitle }: { subtitle?: string }) {
         {subtitle && <p className="text-sm text-gray-500">{subtitle}</p>}
       </div>
       <div className="flex items-center gap-2">
+        <ThemeToggle />
         {isAdmin ? (
           <>
             <span className="rounded-full bg-gray-900 px-3 py-1 text-xs font-semibold text-white">
@@ -56,13 +72,26 @@ export function AppHeader({ subtitle }: { subtitle?: string }) {
           </>
         ) : (
           session?.name && (
-            <button
-              onClick={renameSelf}
-              className="text-sm text-gray-500 hover:text-rose-500"
-              title="คลิกเพื่อเปลี่ยนชื่อ"
-            >
-              สวัสดี <b className="text-gray-700">{session.name}</b> ✎
-            </button>
+            <span className="flex items-center gap-2 text-sm text-gray-500">
+              <span>
+                สวัสดี{" "}
+                <b className="text-gray-700">{session.nickname || session.name}</b>
+              </span>
+              <button
+                onClick={setNickname}
+                className="rounded-lg border border-gray-200 px-2 py-1 text-xs hover:bg-gray-50"
+                title="ตั้งชื่อเล่น (ชื่อที่โชว์)"
+              >
+                ชื่อเล่น
+              </button>
+              <button
+                onClick={renameSelf}
+                className="rounded-lg border border-gray-200 px-2 py-1 text-xs hover:bg-gray-50"
+                title="เปลี่ยนชื่อล็อกอิน"
+              >
+                ชื่อล็อกอิน
+              </button>
+            </span>
           )
         )}
         <button

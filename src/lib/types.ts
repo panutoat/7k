@@ -184,11 +184,14 @@ export interface Session {
   /** Set for member sessions. */
   memberId?: string;
   name?: string;
+  nickname?: string | null;
 }
 
 export interface Member {
   id: string;
   name: string;
+  /** Display nickname (in-game name); falls back to `name` when empty. */
+  nickname: string | null;
   /** Last time this member logged in (for participation tracking). */
   lastLoginAt: string | null;
   /** Number of logins today (00:00–23:59 Asia/Bangkok). */

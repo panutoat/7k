@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -34,6 +35,9 @@ export default function LoginPage() {
 
   return (
     <main className="mx-auto flex min-h-screen max-w-md flex-col justify-center px-4 py-8">
+      <div className="mb-3 flex justify-end">
+        <ThemeToggle />
+      </div>
       <div className="overflow-hidden rounded-3xl bg-white shadow-card">
         <div className="border-b px-6 py-5">
           <h1 className="text-2xl font-extrabold tracking-tight">7k-เสือ</h1>

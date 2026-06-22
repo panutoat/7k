@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getSession, requireAdmin, sessionCookie } from "@/lib/auth";
-import { deleteMember, renameMember } from "@/lib/db";
+import { deleteMember, renameMember, setMemberNickname } from "@/lib/db";
+import { Member } from "@/lib/types";
 import { fail } from "@/lib/api";
 
 export const dynamic = "force-dynamic";
@@ -18,18 +19,35 @@ export async function PUT(
       return NextResponse.json({ error: "ไม่มีสิทธิ์" }, { status: 403 });
     }
 
-    const body = (await req.json()) as { name?: string };
-    const name = (body.name || "").trim();
-    if (!name) return NextResponse.json({ error: "กรุณากรอกชื่อ" }, { status: 400 });
+    const body = (await req.json()) as { name?: string; nickname?: string };
 
     try {
-      const member = await renameMember(params.id, name);
+      let member: Member | null = null;
+      // Rename (login name) when a non-empty name is provided.
+      if ("name" in body) {
+        const name = (body.name || "").trim();
+        if (!name) return NextResponse.json({ error: "กรุณากรอกชื่อ" }, { status: 400 });
+        member = await renameMember(params.id, name);
+      }
+      // Set/clear the display nickname.
+      if ("nickname" in body) {
+        member = await setMemberNickname(
+          params.id,
+          (body.nickname || "").trim() || null
+        );
+      }
       if (!member) return NextResponse.json({ error: "not found" }, { status: 404 });
+
       const res = NextResponse.json({ member });
-      // Keep the cookie's display name in sync when renaming yourself.
+      // Keep the cookie's name/nickname in sync when editing yourself.
       if (isSelf) {
         res.cookies.set(
-          sessionCookie({ role: "member", memberId: member.id, name: member.name })
+          sessionCookie({
+            role: "member",
+            memberId: member.id,
+            name: member.name,
+            nickname: member.nickname,
+          })
         );
       }
       return res;

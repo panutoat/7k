@@ -63,6 +63,19 @@ export default function AdminHome() {
     load();
   }
 
+  async function setMemberNickname(m: Member) {
+    const nick = window.prompt(`ชื่อเล่นของ ${m.name}`, m.nickname ?? "");
+    if (nick === null) return;
+    const res = await fetch(`/api/members/${m.id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ nickname: nick.trim() }),
+    });
+    const data = await res.json();
+    if (!res.ok) return setError(data.error || "ตั้งชื่อเล่นไม่สำเร็จ");
+    load();
+  }
+
   async function renameMember(m: Member) {
     const name = window.prompt("แก้ชื่อสมาชิก", m.name);
     if (!name || !name.trim() || name.trim() === m.name) return;
@@ -235,8 +248,19 @@ export default function AdminHome() {
                 key={m.id}
                 className="flex items-center justify-between rounded-xl border border-gray-100 px-3 py-2 text-sm"
               >
-                <span className="truncate">{m.name}</span>
+                <span className="truncate">
+                  {m.nickname || m.name}
+                  {m.nickname && (
+                    <span className="ml-1 text-xs text-gray-400">({m.name})</span>
+                  )}
+                </span>
                 <span className="flex items-center gap-2">
+                  <button
+                    onClick={() => setMemberNickname(m)}
+                    className="text-xs text-gray-400 hover:text-rose-500"
+                  >
+                    ชื่อเล่น
+                  </button>
                   <button
                     onClick={() => renameMember(m)}
                     className="text-xs text-gray-400 hover:text-rose-500"

@@ -326,7 +326,14 @@ export default function AdminWarPage() {
                   const part = Math.round((s.done / ATTACK_SLOTS) * 100);
                   return (
                     <tr key={m.id} className="border-b last:border-0">
-                      <td className="px-4 py-2 font-medium">{m.name}</td>
+                      <td className="px-4 py-2 font-medium">
+                        {m.nickname || m.name}
+                        {m.nickname && (
+                          <span className="ml-1 text-xs font-normal text-gray-400">
+                            ({m.name})
+                          </span>
+                        )}
+                      </td>
                       {Array.from({ length: ATTACK_SLOTS }, (_, i) => i + 1).map(
                         (slot) => {
                           const atk = attackOf(m.id, slot);

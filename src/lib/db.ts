@@ -60,6 +60,7 @@ CREATE INDEX IF NOT EXISTS units_sort_idx ON units (sort_order, created_at);
 CREATE TABLE IF NOT EXISTS members (
   id            UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name          TEXT NOT NULL UNIQUE,
+  nickname      TEXT,
   last_login_at TIMESTAMPTZ,
   created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
@@ -139,6 +140,7 @@ ALTER TABLE recommended_teams ADD COLUMN IF NOT EXISTS note TEXT;
 ALTER TABLE attack_teams  ADD COLUMN IF NOT EXISTS link TEXT;
 ALTER TABLE attack_teams  ADD COLUMN IF NOT EXISTS result TEXT;
 ALTER TABLE members ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ;
+ALTER TABLE members ADD COLUMN IF NOT EXISTS nickname TEXT;
 ALTER TABLE wars ADD COLUMN IF NOT EXISTS our_score INT;
 ALTER TABLE wars ADD COLUMN IF NOT EXISTS enemy_score INT;
 ALTER TABLE wars ADD COLUMN IF NOT EXISTS result TEXT;
@@ -359,6 +361,7 @@ export async function getUnitImage(
 interface MemberRow {
   id: string;
   name: string;
+  nickname: string | null;
   last_login_at: Date | null;
   login_today?: number | string;
   created_at: Date;
@@ -366,17 +369,18 @@ interface MemberRow {
 const toMember = (r: MemberRow): Member => ({
   id: r.id,
   name: r.name,
+  nickname: r.nickname ?? null,
   lastLoginAt: r.last_login_at ? new Date(r.last_login_at).toISOString() : null,
   loginToday: Number(r.login_today ?? 0),
   createdAt: new Date(r.created_at).toISOString(),
 });
 
-const MEMBER_COLS = "id, name, last_login_at, created_at";
+const MEMBER_COLS = "id, name, nickname, last_login_at, created_at";
 
 export async function listMembers(): Promise<Member[]> {
   await ensureSchema();
   const { rows } = await getPool().query<MemberRow>(
-    `SELECT m.id, m.name, m.last_login_at, m.created_at,
+    `SELECT m.id, m.name, m.nickname, m.last_login_at, m.created_at,
        COALESCE((
          SELECT count FROM member_logins ml
          WHERE ml.member_id = m.id
@@ -426,6 +430,18 @@ export async function renameMember(
   const { rows } = await getPool().query<MemberRow>(
     `UPDATE members SET name = $2 WHERE id = $1 RETURNING ${MEMBER_COLS}`,
     [id, name]
+  );
+  return rows[0] ? toMember(rows[0]) : null;
+}
+
+export async function setMemberNickname(
+  id: string,
+  nickname: string | null
+): Promise<Member | null> {
+  await ensureSchema();
+  const { rows } = await getPool().query<MemberRow>(
+    `UPDATE members SET nickname = $2 WHERE id = $1 RETURNING ${MEMBER_COLS}`,
+    [id, nickname]
   );
   return rows[0] ? toMember(rows[0]) : null;
 }

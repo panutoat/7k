@@ -13,9 +13,12 @@ import { FormationPreview } from "./FormationPreview";
 export function LibraryDetailModal({
   entry,
   onClose,
+  onEdit,
 }: {
   entry: LibraryDefense;
   onClose: () => void;
+  /** Admin-only: jump to editing this team. */
+  onEdit?: () => void;
 }) {
   const { getUnit } = useUnits();
   const typeLabel =
@@ -87,7 +90,15 @@ export function LibraryDetailModal({
           </div>
         </div>
 
-        <div className="flex justify-end border-t px-6 py-3">
+        <div className="flex justify-end gap-2 border-t px-6 py-3">
+          {onEdit && (
+            <button
+              onClick={onEdit}
+              className="rounded-xl bg-gray-900 px-5 py-2 text-sm font-semibold text-white hover:bg-black"
+            >
+              แก้ไขทีม
+            </button>
+          )}
           <button
             onClick={onClose}
             className="rounded-xl border border-gray-200 px-5 py-2 text-sm font-medium hover:bg-gray-50"

@@ -140,6 +140,12 @@ export default function LibraryPage() {
                         ↓
                       </button>
                       <button
+                        onClick={() => setEditing(e)}
+                        className="text-xs text-gray-400 hover:text-rose-500"
+                      >
+                        แก้ไข
+                      </button>
+                      <button
                         onClick={() => setRank(e.id, null)}
                         className="text-xs text-gray-300 hover:text-red-500"
                       >
@@ -237,7 +243,18 @@ export default function LibraryPage() {
       </section>
 
       {detail && (
-        <LibraryDetailModal entry={detail} onClose={() => setDetail(null)} />
+        <LibraryDetailModal
+          entry={detail}
+          onClose={() => setDetail(null)}
+          onEdit={
+            isAdmin
+              ? () => {
+                  setEditing(detail);
+                  setDetail(null);
+                }
+              : undefined
+          }
+        />
       )}
       {adding && (
         <AddLibraryModal

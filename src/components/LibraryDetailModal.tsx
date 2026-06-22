@@ -41,6 +41,12 @@ export function LibraryDetailModal({
         </div>
 
         <div className="scroll-thin flex-1 space-y-4 overflow-y-auto px-6 py-5">
+          {entry.note && (
+            <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
+              <p className="mb-1 text-sm font-semibold text-gray-600">📋 รายละเอียด</p>
+              <p className="whitespace-pre-wrap text-sm text-gray-600">{entry.note}</p>
+            </div>
+          )}
           <div className="rounded-2xl border border-gray-100 bg-gray-50 p-4">
             <span className="mb-2 inline-block rounded-full bg-gray-200 px-2 py-0.5 text-xs font-medium text-gray-600">
               {typeLabel}

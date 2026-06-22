@@ -130,6 +130,7 @@ CREATE TABLE IF NOT EXISTS defense_library (
   link        TEXT,
   recommended JSONB NOT NULL DEFAULT '[]'::jsonb,
   defense_rank INT,
+  note        TEXT,
   created_at  TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 
@@ -147,6 +148,7 @@ ALTER TABLE wars ADD COLUMN IF NOT EXISTS result TEXT;
 ALTER TABLE wars ADD COLUMN IF NOT EXISTS locked BOOLEAN NOT NULL DEFAULT false;
 ALTER TABLE defense_library ADD COLUMN IF NOT EXISTS recommended JSONB NOT NULL DEFAULT '[]'::jsonb;
 ALTER TABLE defense_library ADD COLUMN IF NOT EXISTS defense_rank INT;
+ALTER TABLE defense_library ADD COLUMN IF NOT EXISTS note TEXT;
 
 CREATE INDEX IF NOT EXISTS defense_war_idx ON defense_teams (war_id, sort_order);
 CREATE INDEX IF NOT EXISTS attack_war_member_idx ON attack_teams (war_id, member_id);
@@ -731,6 +733,7 @@ interface LibraryRow {
   label: string;
   formation: Formation;
   link: string | null;
+  note: string | null;
   recommended: RecommendedTemplate[] | null;
   defense_rank: number | null;
   created_at: Date;
@@ -740,13 +743,14 @@ const toLibrary = (r: LibraryRow): LibraryDefense => ({
   label: r.label,
   formation: r.formation,
   link: r.link,
+  note: r.note ?? null,
   recommended: r.recommended ?? [],
   defenseRank: r.defense_rank,
   createdAt: new Date(r.created_at).toISOString(),
 });
 
 const LIBRARY_COLS =
-  "id, label, formation, link, recommended, defense_rank, created_at";
+  "id, label, formation, link, note, recommended, defense_rank, created_at";
 
 /** Mark/unmark a library team as one of our guild's chosen defenses. */
 export async function setLibraryRank(
@@ -773,17 +777,19 @@ export async function createLibrary(input: {
   label: string;
   formation: Formation;
   link: string | null;
+  note: string | null;
   recommended: RecommendedTemplate[];
 }): Promise<LibraryDefense> {
   await ensureSchema();
   const { rows } = await getPool().query<LibraryRow>(
-    `INSERT INTO defense_library (label, formation, link, recommended)
-     VALUES ($1, $2, $3, $4)
+    `INSERT INTO defense_library (label, formation, link, note, recommended)
+     VALUES ($1, $2, $3, $4, $5)
      RETURNING ${LIBRARY_COLS}`,
     [
       input.label,
       JSON.stringify(input.formation),
       input.link,
+      input.note,
       JSON.stringify(input.recommended),
     ]
   );
@@ -796,12 +802,13 @@ export async function updateLibrary(
     label: string;
     formation: Formation;
     link: string | null;
+    note: string | null;
     recommended: RecommendedTemplate[];
   }
 ): Promise<LibraryDefense | null> {
   await ensureSchema();
   const { rows } = await getPool().query<LibraryRow>(
-    `UPDATE defense_library SET label = $2, formation = $3, link = $4, recommended = $5
+    `UPDATE defense_library SET label = $2, formation = $3, link = $4, note = $5, recommended = $6
      WHERE id = $1
      RETURNING ${LIBRARY_COLS}`,
     [
@@ -809,6 +816,7 @@ export async function updateLibrary(
       input.label,
       JSON.stringify(input.formation),
       input.link,
+      input.note,
       JSON.stringify(input.recommended),
     ]
   );

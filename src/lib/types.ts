@@ -57,7 +57,7 @@ export const RINGS: {
 }[] = [
   { id: "revive", label: "คืนชีพ", short: "ชีพ", color: "#a855f7" },
   { id: "immortal", label: "อมตะ", short: "อมตะ", color: "#ef4444" },
-  { id: "shield", label: "โล่ป้องกัน", short: "โล่", color: "#f59e0b" },
+  { id: "shield", label: "อำนาจ", short: "อำนาจ", color: "#f59e0b" },
 ];
 
 export interface Slot {
@@ -245,6 +245,8 @@ export interface LibraryDefense {
   link: string | null;
   /** Attack teams recommended for breaking this defense (carried with it). */
   recommended: RecommendedTemplate[];
+  /** Free-text detail/description shown when viewing the card. */
+  note: string | null;
   /** If set, this is one of OUR guild's chosen defenses (rank for ordering). */
   defenseRank: number | null;
   createdAt: string;

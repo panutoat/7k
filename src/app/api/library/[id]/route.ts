@@ -16,6 +16,7 @@ export async function PUT(
       label?: string;
       formation?: Formation;
       link?: string;
+      note?: string;
       recommended?: unknown;
     };
     if (!body.formation || !body.formation.back || !body.formation.front) {
@@ -25,6 +26,7 @@ export async function PUT(
       label: (body.label || "").trim(),
       formation: body.formation,
       link: (body.link || "").trim() || null,
+      note: (body.note || "").trim() || null,
       recommended: sanitizeRecommended(body.recommended),
     });
     if (!entry) return NextResponse.json({ error: "not found" }, { status: 404 });

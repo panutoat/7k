@@ -23,6 +23,7 @@ export async function POST(req: Request) {
       label?: string;
       formation?: Formation;
       link?: string;
+      note?: string;
       recommended?: unknown;
     };
     if (!body.formation || !body.formation.back || !body.formation.front) {
@@ -32,6 +33,7 @@ export async function POST(req: Request) {
       label: (body.label || "").trim(),
       formation: body.formation,
       link: (body.link || "").trim() || null,
+      note: (body.note || "").trim() || null,
       recommended: sanitizeRecommended(body.recommended),
     });
     return NextResponse.json({ entry }, { status: 201 });

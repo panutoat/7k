@@ -13,7 +13,7 @@ export function AddLibraryModal({
   onSaved: () => void;
 }) {
   const [label, setLabel] = useState("");
-  const [link, setLink] = useState("");
+  const [note, setNote] = useState("");
   const [formation, setFormation] = useState<Formation>(emptyFormation());
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -28,7 +28,7 @@ export function AddLibraryModal({
         body: JSON.stringify({
           label: label.trim(),
           formation,
-          link: link.trim(),
+          note: note.trim(),
           recommended: [],
         }),
       });
@@ -66,11 +66,12 @@ export function AddLibraryModal({
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm text-gray-500">ลิงก์ 7k-combo (ถ้ามี)</label>
-            <input
-              value={link}
-              onChange={(e) => setLink(e.target.value)}
-              placeholder="วางลิงก์ทีมจาก 7k-combo"
+            <label className="mb-1 block text-sm text-gray-500">รายละเอียด</label>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={2}
+              placeholder="คำอธิบายทีม (สมาชิกเห็นตอนกดดูการ์ด)"
               className="w-full rounded-xl border border-gray-200 px-4 py-2 text-sm outline-none focus:border-rose-300"
             />
           </div>

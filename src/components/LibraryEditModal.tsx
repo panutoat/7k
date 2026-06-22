@@ -21,7 +21,8 @@ export function LibraryEditModal({
   onSaved: () => void;
 }) {
   const [label, setLabel] = useState(entry.label);
-  const [link, setLink] = useState(entry.link ?? "");
+  const [note, setNote] = useState(entry.note ?? "");
+  const [link] = useState(entry.link ?? ""); // preserved (set from war import); not edited here
   const [formation, setFormation] = useState<Formation>(entry.formation);
   const [recommended, setRecommended] = useState<RecommendedTemplate[]>(
     entry.recommended ?? []
@@ -83,6 +84,7 @@ export function LibraryEditModal({
           label: label.trim(),
           formation,
           link: link.trim(),
+          note: note.trim(),
           recommended,
         }),
       });
@@ -120,11 +122,12 @@ export function LibraryEditModal({
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm text-gray-500">ลิงก์ 7k-combo (ถ้ามี)</label>
-            <input
-              value={link}
-              onChange={(e) => setLink(e.target.value)}
-              placeholder="วางลิงก์ทีมจาก 7k-combo"
+            <label className="mb-1 block text-sm text-gray-500">รายละเอียด</label>
+            <textarea
+              value={note}
+              onChange={(e) => setNote(e.target.value)}
+              rows={2}
+              placeholder="คำอธิบายทีม (สมาชิกเห็นตอนกดดูการ์ด)"
               className="w-full rounded-xl border border-gray-200 px-4 py-2 text-sm outline-none focus:border-rose-300"
             />
           </div>

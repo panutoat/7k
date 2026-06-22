@@ -9,6 +9,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { FormationPreview } from "@/components/FormationPreview";
 import { AddLibraryModal } from "@/components/AddLibraryModal";
 import { LibraryEditModal } from "@/components/LibraryEditModal";
+import { LibraryDetailModal } from "@/components/LibraryDetailModal";
 
 export default function LibraryPage() {
   const { session, loading, isAdmin } = useAuth();
@@ -17,6 +18,7 @@ export default function LibraryPage() {
   const [busy, setBusy] = useState(true);
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<LibraryDefense | null>(null);
+  const [detail, setDetail] = useState<LibraryDefense | null>(null);
 
   useEffect(() => {
     if (!loading && !session) router.replace("/login");
@@ -102,7 +104,9 @@ export default function LibraryPage() {
             {chosen.map((e, i) => (
               <div
                 key={e.id}
-                className="relative rounded-2xl border-2 border-emerald-300 bg-emerald-50/40 p-4"
+                onClick={() => setDetail(e)}
+                className="relative cursor-pointer rounded-2xl border-2 border-emerald-300 bg-emerald-50/40 p-4 transition hover:border-emerald-400"
+                title="คลิกดูรายละเอียด"
               >
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <span className="flex items-center gap-2 truncate font-semibold">
@@ -110,9 +114,17 @@ export default function LibraryPage() {
                       {i + 1}
                     </span>
                     {e.label || "ไม่มีชื่อ"}
+                    {e.recommended.length > 0 && (
+                      <span className="text-xs text-amber-500">
+                        ⭐{e.recommended.length}
+                      </span>
+                    )}
                   </span>
                   {isAdmin && (
-                    <span className="flex shrink-0 items-center gap-1">
+                    <span
+                      className="flex shrink-0 items-center gap-1"
+                      onClick={(ev) => ev.stopPropagation()}
+                    >
                       <button
                         onClick={() => move(i, -1)}
                         disabled={i === 0}
@@ -137,16 +149,7 @@ export default function LibraryPage() {
                   )}
                 </div>
                 <FormationPreview formation={e.formation} size={32} />
-                {e.link && (
-                  <a
-                    href={e.link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-2 inline-block text-xs font-medium text-blue-500 hover:underline"
-                  >
-                    🔗 7k-combo
-                  </a>
-                )}
+                <p className="mt-2 text-[11px] text-emerald-600">แตะเพื่อดูรายละเอียด →</p>
               </div>
             ))}
           </div>
@@ -177,7 +180,9 @@ export default function LibraryPage() {
             {library.map((e) => (
               <div
                 key={e.id}
-                className="rounded-2xl border border-gray-100 bg-white p-4 shadow-sm"
+                onClick={() => setDetail(e)}
+                className="cursor-pointer rounded-2xl border border-gray-100 bg-white p-4 shadow-sm transition hover:border-rose-200"
+                title="คลิกดูรายละเอียด"
               >
                 <div className="mb-2 flex items-center justify-between gap-2">
                   <span className="truncate text-sm font-semibold">
@@ -189,7 +194,10 @@ export default function LibraryPage() {
                     )}
                   </span>
                   {isAdmin && (
-                    <span className="flex shrink-0 items-center gap-2">
+                    <span
+                      className="flex shrink-0 items-center gap-2"
+                      onClick={(ev) => ev.stopPropagation()}
+                    >
                       <button
                         onClick={() => setEditing(e)}
                         className="text-xs text-gray-400 hover:text-rose-500"
@@ -209,7 +217,10 @@ export default function LibraryPage() {
                 {isAdmin &&
                   (e.defenseRank == null ? (
                     <button
-                      onClick={() => setRank(e.id, maxRank + 1)}
+                      onClick={(ev) => {
+                        ev.stopPropagation();
+                        setRank(e.id, maxRank + 1);
+                      }}
                       className="mt-3 w-full rounded-lg border border-emerald-300 px-3 py-1.5 text-xs font-semibold text-emerald-600 hover:bg-emerald-50"
                     >
                       + เลือกใช้ป้องกัน
@@ -225,6 +236,9 @@ export default function LibraryPage() {
         )}
       </section>
 
+      {detail && (
+        <LibraryDetailModal entry={detail} onClose={() => setDetail(null)} />
+      )}
       {adding && (
         <AddLibraryModal
           onClose={() => setAdding(false)}

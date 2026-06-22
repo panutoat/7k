@@ -35,10 +35,15 @@ body {
 /* ------------------------------------------------------------------ */
 html.dark {
   color-scheme: dark;
+  background: #0b0f17;
 }
 html.dark body {
   background: #0b0f17;
   color: #e5e7eb;
+}
+/* Fill the viewport so the dark background covers short pages too. */
+body {
+  min-height: 100vh;
 }
 
 .dark .bg-white { background-color: #161b25 !important; }

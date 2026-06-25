@@ -286,7 +286,7 @@ export default function AdminWarPage() {
 
       {/* Attack board */}
       <section className="mt-8">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-lg font-bold">ตารางการตี (คลิกช่องเพื่อมาร์ค/จับคู่)</h2>
           <select
             value={sort}
@@ -298,6 +298,21 @@ export default function AdminWarPage() {
             <option value="name">เรียงตามชื่อ</option>
           </select>
         </div>
+        {(() => {
+          const totalSlots = members.length * ATTACK_SLOTS;
+          const totalDone = attacks.filter((a) => a.done).length;
+          return (
+            <p className="mb-3 text-sm text-gray-500">
+              ตีแล้ว <b className="text-gray-700">{totalDone}</b>/{totalSlots} ไม้ ·
+              เหลือ{" "}
+              <b className="text-rose-600">{Math.max(0, totalSlots - totalDone)}</b> ไม้
+              <span className="text-gray-400">
+                {" "}
+                (สมาชิก {members.length} คน × {ATTACK_SLOTS})
+              </span>
+            </p>
+          );
+        })()}
         {members.length === 0 ? (
           <p className="rounded-2xl border border-dashed border-gray-200 bg-white p-8 text-center text-sm text-gray-400">
             ยังไม่มีสมาชิก — เพิ่มได้ที่หน้าจัดการ
